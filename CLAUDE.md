@@ -16,5 +16,5 @@ The **AI QA Studio product** — a local-first desktop app (web GUI) that runs t
 
 ## Conventions
 
-- **Small changes** commit to `main`; **large changes** use a feature branch + PR.
-- This repo's git history starts at the scaffold commit; no GitHub remote is configured yet (don't push without being asked).
+- **Small changes** commit to `master`; **large changes** use a feature branch + PR.
+- This repo's git history starts at the scaffold commit. Remote `origin` is `github.com/dogkeeper886/ai-qa-studio` (don't push without being asked).
