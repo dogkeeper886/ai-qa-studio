@@ -1,0 +1,5 @@
+# Personal Claude Code settings — not shared
+.claude/settings.local.json
+
+# Local-only secrets / integration config — never commit
+config/
