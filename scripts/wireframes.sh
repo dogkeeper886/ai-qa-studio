@@ -16,6 +16,10 @@ DIR="$ROOT/design/wireframes"
 
 command -v docker >/dev/null 2>&1 || { echo "docker not found — required to serve the wireframes" >&2; exit 1; }
 
+# container id if it exists (any state), else empty — name match is anchored so it
+# can't collide with a similarly-named container
+cid() { docker ps -aq --filter "name=^${NAME}$"; }
+
 case "${1:-start}" in
   start)
     [ -d "$DIR" ] || { echo "no wireframes dir at $DIR" >&2; exit 1; }
@@ -28,13 +32,16 @@ case "${1:-start}" in
     echo "Stop with: scripts/wireframes.sh stop"
     ;;
   stop)
-    docker rm -f "$NAME" >/dev/null 2>&1 && echo "stopped $NAME" || echo "$NAME not running"
+    if [ -n "$(cid)" ]; then docker rm -f "$NAME" >/dev/null; echo "stopped $NAME"
+    else echo "$NAME not running"; fi
     ;;
   status)
-    docker ps --filter "name=$NAME" --format '{{.Names}}  {{.Status}}  {{.Ports}}'
+    if [ -n "$(cid)" ]; then docker ps --filter "name=^${NAME}$" --format '{{.Names}}  {{.Status}}  {{.Ports}}'
+    else echo "$NAME not running"; fi
     ;;
   logs)
-    docker logs "$NAME"
+    if [ -n "$(cid)" ]; then docker logs "$NAME"
+    else echo "$NAME not running — start it first: $(basename "$0") start" >&2; exit 1; fi
     ;;
   *)
     echo "usage: $(basename "$0") [start|stop|status|logs]" >&2
