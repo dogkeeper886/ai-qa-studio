@@ -1,0 +1,286 @@
+/* AI QA Studio — wireframe component framework (light-DOM custom elements).
+   Pairs with tokens.css (variables) + components.js (element definitions).
+   Light DOM on purpose: tokens.css cascades in normally, selectors stay simple,
+   iteration stays fast. Styles are keyed by <qa-*> tag + internal classes. */
+
+/* ---- base reset (matches what the per-file screens assumed) ---- */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+  background:var(--bg);color:var(--fg);font-size:.875rem}
+.qa-muted{color:var(--muted)}
+
+/* ---- qa-app: full-height shell ---- */
+qa-app{display:flex;height:100vh;overflow:hidden}
+qa-app > main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.qa-content{flex:1;overflow:auto;padding:1.5rem}
+
+/* ---- qa-sidebar ---- */
+qa-sidebar{width:224px;flex:none;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:1rem .75rem;gap:1.5rem}
+qa-sidebar .brand{display:flex;align-items:center;gap:.5rem;padding:.25rem .5rem;font-weight:700;font-size:1rem}
+qa-sidebar .brand .dot{width:15px;height:15px;border-radius:4px;background:var(--accent)}
+qa-sidebar .nav{display:flex;flex-direction:column;gap:.125rem}
+qa-sidebar .nav a{display:flex;align-items:center;gap:.625rem;padding:.5rem .625rem;border-radius:8px;
+  color:var(--muted);font-weight:500;cursor:pointer;text-decoration:none}
+qa-sidebar .nav a.active{background:var(--bg);color:var(--fg);font-weight:600}
+qa-sidebar .nav a .ic{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;opacity:.85}
+qa-sidebar .nav a .ic svg{width:16px;height:16px;display:block}
+qa-sidebar .spacer{flex:1}
+qa-sidebar .userchip{display:flex;align-items:center;gap:.5rem;padding:.5rem;border-radius:8px}
+qa-sidebar .avatar{width:28px;height:28px;border-radius:999px;background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+/* collapsible (IDE-style icon rail) + bottom toggle */
+qa-sidebar{transition:width .12s ease}
+qa-sidebar.collapsed{width:60px}
+qa-sidebar.collapsed .bname,qa-sidebar.collapsed .label,qa-sidebar.collapsed .uinfo{display:none}
+qa-sidebar.collapsed .brand{justify-content:center;padding:.25rem}
+qa-sidebar.collapsed .nav a{justify-content:center;padding:.5rem}
+qa-sidebar.collapsed .userchip{justify-content:center;padding:.5rem 0}
+qa-sidebar .railtoggle{border-top:1px solid var(--border);padding-top:.625rem;display:flex;justify-content:flex-end}
+qa-sidebar.collapsed .railtoggle{justify-content:center}
+qa-sidebar .railtoggle .rt{background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.9rem;line-height:1;cursor:pointer}
+qa-sidebar .railtoggle .rt:hover{color:var(--fg);background:var(--bg)}
+
+/* ---- qa-topbar ---- */
+qa-topbar{height:56px;flex:none;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  gap:.75rem;padding:0 1.25rem}
+qa-topbar .crumb{color:var(--muted);font-size:.8125rem}
+qa-topbar .crumb b{color:var(--fg)}
+qa-topbar .crumb a{color:inherit;text-decoration:none;cursor:pointer}
+qa-topbar .crumb a:hover{color:var(--fg);text-decoration:underline}
+qa-topbar .spacer{flex:1}
+.qa-iconbtn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:.4rem .7rem;
+  color:var(--fg);font-weight:600;font-size:.8125rem;cursor:pointer}
+.qa-iconbtn.on{background:var(--bg);border-color:var(--accent)}  /* toggle in the "on" state (e.g. Assistant open) */
+body.assistant-pinned qa-topbar [data-assistant]{display:none}  /* pinned drawer → no redundant toggle */
+
+/* ---- qa-rail: pipeline ---- */
+qa-rail{display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:.875rem 1rem;flex-wrap:wrap;box-shadow:var(--shadow-sm)}
+qa-rail .step{display:flex;align-items:center;gap:.4rem;font-size:.75rem;font-weight:600;color:var(--muted)}
+qa-rail .step .d{width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  font-size:.62rem;font-weight:800;border:1.5px solid var(--border)}
+qa-rail .step.done{color:var(--fg)}
+qa-rail .step.done .d{background:var(--success);border-color:var(--success);color:var(--on-status)}
+qa-rail .step.cur{color:var(--fg)}
+qa-rail .step.cur .d{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+qa-rail .sep{color:var(--border)}
+qa-rail a.step{text-decoration:none;cursor:pointer}
+
+/* ---- qa-drawer: assistant ---- */
+qa-drawer{width:360px;flex:none;background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column}
+body.assistant-collapsed qa-drawer:not([pinned]){display:none}  /* collapsed = hidden; reopen via ✦ Assistant */
+qa-drawer .dhead{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:0 1rem;border-bottom:1px solid var(--border);font-weight:700}
+qa-drawer .dhead-right{display:flex;align-items:center;gap:.5rem}  /* slot for titleRight + close button */
+qa-drawer .dbody{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.875rem}
+qa-drawer .dinput{flex:none;border-top:1px solid var(--border);padding:.75rem 1rem}
+qa-drawer .dbox{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.55rem .75rem;
+  color:var(--muted);font-size:.8125rem}
+/* drawer message content (authored inside <qa-drawer>) */
+.msg{font-size:.8125rem;line-height:1.45;max-width:92%}
+.msg.user{align-self:flex-end;background:var(--accent);color:var(--on-accent);padding:.5rem .75rem;
+  border-radius:12px 12px 2px 12px}
+.msg.bot{align-self:flex-start}
+.act{align-self:flex-start;font-size:.6875rem;color:var(--muted);font-family:ui-monospace,Menlo,monospace;
+  border-left:2px solid var(--border);padding-left:.5rem;line-height:1.5}
+
+/* ---- qa-banner: inline notice (warn / error / info / success).
+       Framework primitive for non-blocking page-level signals — rate-limit
+       warnings, form errors, status surfaces. Never use for modal decisions
+       (that's a dialog + buttons). */
+.qa-banner{display:flex;align-items:flex-start;gap:.55rem;padding:.55rem .85rem;
+  border:1px solid var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--surface));
+  border-radius:8px;margin-bottom:1rem;font-size:.75rem;line-height:1.45}
+.qa-banner-warn{border-color:var(--warning);background:color-mix(in oklch,var(--warning) 12%,var(--surface))}
+.qa-banner-error{border-color:var(--danger);background:color-mix(in oklch,var(--danger) 12%,var(--surface));color:var(--fg)}
+.qa-banner-success{border-color:var(--success);background:color-mix(in oklch,var(--success) 12%,var(--surface))}
+.qa-banner-icon{flex:none;font-size:.9rem}
+.qa-banner-text strong{font-weight:700}
+
+/* ---- qa-empty: "nothing here yet" cell (loading / empty / complete / error)
+       Framework primitive used inside list/panel containers. Don't reinvent
+       per-page — pass kind + title + sub + optional link to the component. */
+.qa-empty{padding:.75rem 1.125rem;display:flex;gap:.75rem;align-items:flex-start}
+.qa-empty-icon{width:20px;height:20px;border-radius:999px;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:.65rem;font-weight:800;margin-top:.05rem;
+  background:transparent;color:var(--muted);border:1px dashed var(--border)}
+.qa-empty-error .qa-empty-icon{border-style:solid;border-color:var(--danger);color:var(--danger)}
+.qa-empty-complete .qa-empty-icon{border-style:solid;border-color:var(--success);color:var(--success)}
+.qa-empty-loading .qa-empty-icon{border-style:dotted}
+.qa-empty-body{flex:1;min-width:0}
+.qa-empty-title{color:var(--muted);font-weight:500}
+.qa-empty-error .qa-empty-title{color:var(--danger);font-weight:600}
+.qa-empty-sub{color:var(--muted);font-size:.75rem;margin-top:.15rem;line-height:1.45}
+.qa-empty-link{display:inline-block;margin-top:.4rem;font-size:.6875rem;color:var(--accent);
+  text-decoration:underline;background:transparent;border:none;cursor:pointer;font-family:inherit;padding:0}
+.qa-empty-link:hover{text-decoration:none}
+
+/* ---- qa-stat-grid + qa-stat: compact stat tiles
+       Use for KPI grids (Dashboard) + session-summary stats (Tracing). */
+.qa-stat-grid{display:grid;gap:.5rem}
+.qa-stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;
+  display:flex;flex-direction:column;gap:.15rem}
+.qa-stat-warn{border-color:var(--warning);background:color-mix(in oklch,var(--warning) 10%,var(--bg))}
+.qa-stat-error{border-color:var(--danger);background:color-mix(in oklch,var(--danger) 10%,var(--bg))}
+.qa-stat-value{font-size:.875rem;font-weight:700;color:var(--fg)}
+.qa-stat-label{font-size:.625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+/* kpi variant — page-level focal tiles (Dashboard header). Bigger value + more
+   padding + surface bg so the row reads as the page's focal element when there's
+   no card around it. Per principle A.5 "size is relative to neighbours" — same
+   role as the default Stat (number+label tile), different neighbourhood weight. */
+.qa-stat-kpi{background:var(--surface);border-radius:12px;padding:1rem 1.25rem;gap:.25rem}
+.qa-stat-kpi .qa-stat-value{font-size:1.5rem}
+.qa-stat-kpi .qa-stat-label{font-size:.6875rem;letter-spacing:.05em}
+
+/* ---- qa-dialog: framework modal shell (backdrop + window + top bar + body).
+       Use for file viewers, gate reviews, confirmations. Don't reinvent the
+       backdrop/ESC/close-button wiring — pass open + title + onClose. */
+.qa-dialog-back{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;
+  justify-content:center;z-index:100;padding:1.5rem}
+.qa-dialog-back.open{display:flex}
+.qa-dialog-win{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-lg);max-width:900px;width:100%;max-height:calc(100vh - 3rem);
+  display:flex;flex-direction:column;overflow:hidden}
+.qa-dialog-top{display:flex;align-items:center;gap:.75rem;padding:0 1rem;height:56px;
+  border-bottom:1px solid var(--border);font-weight:700}
+.qa-dialog-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa-dialog-header-right{display:flex;align-items:center;gap:.5rem}
+.qa-dialog-body{flex:1;overflow:auto;padding:1.25rem}
+
+/* ---- DecisionPanel (#66/L6) — framework primitive for "agent waiting on
+       a human decision." Typically rendered in QaDrawer's footer slot.
+       Shared by AskUserQuestion (today) and L6's canUseTool gate UI. */
+.decision{flex:none;border-top:1px solid var(--border);padding:.875rem 1rem;background:var(--surface);
+  display:flex;flex-direction:column;gap:.5rem}
+.decision-label{font-size:.625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700}
+.decision-question{font-size:.8125rem;font-weight:600;color:var(--fg);line-height:1.4}
+.decision-options{display:flex;flex-direction:column;gap:.375rem;margin-top:.25rem}
+.decision-opt{text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem .7rem;cursor:pointer;font-family:inherit;font-size:.75rem;color:var(--fg);
+  display:flex;flex-direction:column;gap:.15rem}
+.decision-opt:hover:not([disabled]){border-color:var(--accent)}
+.decision-opt.is-submitting{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.decision-opt[disabled]{opacity:.55;cursor:not-allowed}
+.decision-opt .opt-label{font-weight:700}
+.decision-opt .opt-desc{color:var(--muted);font-size:.6875rem;line-height:1.4}
+.decision-opt.is-submitting .opt-desc{color:var(--on-accent);opacity:.85}
+.decision-error{margin-top:.4rem;padding:.4rem .55rem;border:1px solid var(--danger);border-radius:6px;
+  color:var(--danger);font-size:.7rem}
+
+/* ---- qa-field: the standout input (was S2 option-C) ---- */
+qa-field{display:block}
+qa-field label{display:block;font-size:.625rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);font-weight:700;margin-bottom:.5rem}
+qa-field .field{width:100%;border:1.5px solid var(--field-border);border-radius:10px;outline:none;
+  background:var(--surface);padding:.75rem .9rem;font-size:.9375rem;color:var(--fg)}
+qa-field .field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--field-ring)}
+qa-field textarea.field{min-height:88px;resize:none;font-family:inherit;line-height:1.5}
+qa-field .field::placeholder{color:var(--muted)}
+
+/* ---- qa-btn (canonical paddings — resolves the per-file drift) ---- */
+.qa-btn{background:var(--accent);color:var(--on-accent);border:none;border-radius:8px;padding:.55rem 1rem;
+  font-weight:600;font-size:.8125rem;cursor:pointer;box-shadow:var(--shadow-sm)}
+.qa-btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--border);box-shadow:none}
+.qa-btn.sm{padding:.375rem .75rem;font-size:.75rem;box-shadow:none;background:transparent;color:var(--fg);
+  border:1px solid var(--border)}
+.qa-btn.sm.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* ---- qa-toggle ---- */
+qa-toggle .switch{display:inline-block;width:38px;height:22px;border-radius:999px;background:var(--accent);
+  position:relative;cursor:pointer;vertical-align:middle}
+qa-toggle .switch.off{background:var(--border)}
+qa-toggle .knob{position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:999px;background:var(--surface)}
+qa-toggle .switch.off .knob{left:2px}
+
+/* ---- badges ---- */
+.badge{display:inline-block;border-radius:999px;padding:.15rem .5rem;font-size:.625rem;font-weight:700;
+  color:var(--on-status);letter-spacing:.02em}
+.badge.pass{background:var(--success)}
+.badge.fail{background:var(--danger)}
+.badge.blocked{background:var(--warning)}
+.badge.muted{background:transparent;color:var(--muted);border:1px solid var(--border)}
+
+/* ---- stat card (.stat) — number + label tile, used in dashboard headers (s1/s11/s13) ---- */
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem}
+.stat .n{font-size:1.5rem;font-weight:700}
+.stat .l{color:var(--muted);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem}
+
+/* ---- search input (.search) — small free-text filter in the app-shell topbar ---- */
+.search{flex:1;max-width:340px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem .75rem;color:var(--muted);font-size:.8125rem}
+
+/* ---- list table (.table / .thead / .trow) — grid-based.
+        Common chrome is here; `grid-template-columns` stays per-screen (each
+        table has its own column ratios — see s1, s11, s13). ---- */
+.table{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  box-shadow:var(--shadow)}
+.thead,.trow{display:grid;align-items:center;gap:1rem;padding:.8rem 1.25rem}
+.thead{color:var(--muted);font-size:.625rem;text-transform:uppercase;letter-spacing:.06em;
+  border-bottom:1px solid var(--border)}
+.trow{border-top:1px solid var(--border);cursor:pointer}
+.trow:hover{background:var(--bg)}
+
+/* ---- modal overlay (.cfgmodal, .amodal — same backdrop, two historic names).
+        The modal WINDOW (.cfgwin / .awin) stays screen-local — each modal's
+        inner content differs (JSON editor on s10, case picker on s12). ---- */
+.cfgmodal,.amodal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;
+  justify-content:center;z-index:60;padding:2rem}
+.cfgmodal.open,.amodal.open{display:flex}
+
+/* ---- summary bar (.envbar, .cfgbar) — top-of-page meta strip with controls.
+        Common chrome is here; each screen keeps its own gap / margin-bottom
+        delta to match its layout (s10 spacing differs slightly from s12). ---- */
+.envbar,.cfgbar{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-sm);padding:1rem 1.25rem;display:flex;flex-wrap:wrap}
+
+/* ---- qa-gate-card (drawer verdict card) ---- */
+qa-gate-card{display:block;border:1px solid var(--border);border-radius:10px;padding:.75rem;background:var(--bg)}
+qa-gate-card .gt{font-weight:700;font-size:.8125rem;display:flex;align-items:center;gap:.5rem}
+qa-gate-card .gd{font-size:.75rem;color:var(--muted);margin:.5rem 0}
+qa-gate-card .ga{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* ---- qa-decision (the "Your call" Decision member — gates + execution approvals) ---- */
+qa-decision{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-sm);padding:1.125rem 1.25rem}
+qa-decision[attention]{border:1.5px solid var(--warning)}  /* paused / needs-you variant */
+qa-decision .dq{font-weight:700;display:flex;align-items:center;gap:.4rem}
+qa-decision .dh{font-size:.8rem;color:var(--muted);margin-top:.15rem}
+qa-decision .dsub{font-size:.78rem;color:var(--muted);margin-top:.25rem}
+/* advisory is a text line (same box structure as the detail line) — not a separate boxed callout */
+qa-decision .rec{font-size:.78rem;color:var(--muted);margin-top:.25rem}
+qa-decision .rec b{color:var(--fg)}
+qa-decision qa-field{margin:.85rem 0}
+qa-decision .dacts{display:flex;gap:.625rem;flex-wrap:wrap}
+
+/* ---- qa-md-viewer (markdown document modal) ---- */
+qa-md-viewer .mdback{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:2rem}
+qa-md-viewer .mdback.open{display:flex}
+qa-md-viewer .mdwin{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);width:760px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+qa-md-viewer .mdtop{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;border-bottom:1px solid var(--border)}
+qa-md-viewer .mdtop .fn{font-family:ui-monospace,Menlo,monospace;font-size:.8125rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* L5.b — promoted from `qa-md-viewer .seg2` so other primitives (FilePreview,
+   future settings/segmented controls) can reuse the same two-button toggle
+   without duplicating CSS. Same role, different mount points. */
+.seg2{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg2 button{border:none;background:transparent;color:var(--muted);font-size:.72rem;font-weight:700;padding:.3rem .65rem;cursor:pointer}
+.seg2 button.active{background:var(--accent);color:var(--on-accent)}
+qa-md-viewer .mdbody{overflow:auto;padding:1.5rem 1.75rem}
+qa-md-viewer .md h1{font-size:1.4rem;font-weight:700;margin:.2rem 0 .6rem;line-height:1.2}
+qa-md-viewer .md h2{font-size:1.05rem;font-weight:700;margin:1.2rem 0 .5rem}
+qa-md-viewer .md h3{font-size:.9rem;font-weight:700;margin:1rem 0 .4rem}
+qa-md-viewer .md p{margin:.5rem 0;line-height:1.6}
+qa-md-viewer .md ul{margin:.4rem 0 .4rem 1.2rem;line-height:1.7}
+qa-md-viewer .md blockquote{border-left:3px solid var(--border);padding:.2rem 0 .2rem .875rem;color:var(--muted);margin:.5rem 0}
+qa-md-viewer .md table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:.8125rem}
+qa-md-viewer .md th,qa-md-viewer .md td{border:1px solid var(--border);padding:.4rem .6rem;text-align:left}
+qa-md-viewer .md th{background:var(--bg);font-weight:700}
+qa-md-viewer .mdsrc{display:none;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;line-height:1.55;color:var(--fg);background:var(--bg);box-shadow:var(--inset);border-radius:8px;padding:1rem;margin:0}
+/* React port: .mdwin window class is replaced by .qa-dialog-win + inner
+   .md-viewer; toggle the rendered/source view via that inner class. The
+   wireframes' static markup still uses .mdwin.src so both selectors
+   coexist (one applies per build). */
+qa-md-viewer .mdwin.src .md, qa-md-viewer .md-viewer.src .md{display:none}
+qa-md-viewer .mdwin.src .mdsrc, qa-md-viewer .md-viewer.src .mdsrc{display:block}

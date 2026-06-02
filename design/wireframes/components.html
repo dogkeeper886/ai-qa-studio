@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI QA Studio — Component framework reference</title>
+<!-- Living reference for the light-DOM custom-element framework.
+     A screen = tokens.css + components.css + components.js (defer), then compose <qa-*>.
+     No per-screen <style> block needed for shared parts.
+     To ADD a component, follow the one defined recipe in components.js's header
+     (define → style by tag in components.css → add here). -->
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="components.js"></script>
+<style>
+ /* page-only helpers (NOT shared components) */
+ .sec{margin-bottom:1.75rem}
+ .sec h2{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin:0 0 .6rem}
+ .row{display:flex;gap:.625rem;align-items:center;flex-wrap:wrap}
+ .pagehead{font-size:1.25rem;font-weight:700;margin:0 0 .25rem}
+ .pagesub{color:var(--muted);font-size:.8125rem;margin:0 0 1.5rem;line-height:1.5}
+</style>
+</head>
+<body class="theme-light">
+<qa-app>
+  <qa-sidebar active="settings"></qa-sidebar>
+  <main>
+    <qa-topbar crumb="AI QA Studio / Component reference"></qa-topbar>
+    <div class="qa-content">
+      <h1 class="pagehead">Component framework</h1>
+      <p class="pagesub">Every screen composes these light-DOM custom elements. Toggle the theme (top-right) — all of them re-theme from <code>tokens.css</code> with zero per-component work.</p>
+
+      <div class="sec"><h2>qa-rail (step="4")</h2>
+        <qa-rail step="4"></qa-rail>
+      </div>
+
+      <div class="sec"><h2>qa-field — the standout input (2a)</h2>
+        <qa-field label="Source" value="STORY-001" placeholder="e.g. STORY-001 or a story URL"></qa-field>
+      </div>
+
+      <div class="sec"><h2>qa-btn variants</h2>
+        <div class="row">
+          <qa-btn variant="primary">Primary</qa-btn>
+          <qa-btn variant="ghost">Ghost</qa-btn>
+          <qa-btn variant="sm-primary">Small primary</qa-btn>
+          <qa-btn variant="sm">Small</qa-btn>
+        </div>
+      </div>
+
+      <div class="sec"><h2>qa-toggle</h2>
+        <div class="row"><qa-toggle on></qa-toggle><span class="qa-muted">on</span>
+          <qa-toggle></qa-toggle><span class="qa-muted">off</span></div>
+      </div>
+
+      <div class="sec"><h2>qa-decision — the "Your call" Decision member</h2>
+        <p class="pagesub">One component for every decision — gates and execution approvals. Default = the gate variant; configure <code>title</code> / <code>actions</code> / <code>attention</code> for others.</p>
+        <h3 style="font-size:.8rem;margin:.5rem 0 .25rem;color:var(--muted)">Gate variant (default + recommendation)</h3>
+        <qa-decision recommendation="name the SSID in TS-02's assertion (advisory)"></qa-decision>
+        <h3 style="font-size:.8rem;margin:1rem 0 .25rem;color:var(--muted)">Attention variant (paused / needs-you + custom actions)</h3>
+        <qa-decision attention title="Your call — step 2 mismatch"
+          prompt="The agent expected the malformed input to be rejected, but the system accepted and stored it."
+          detail="Defect, or an intended change? Evidence is attached to each step."
+          placeholder="Tell the agent what to do — or pick an action…"
+          actions="Confirm FAIL · log defect, Override to PASS, Retry step, Pause whole run"></qa-decision>
+      </div>
+
+      <div class="sec"><h2>qa-md-viewer</h2>
+        <qa-btn variant="ghost" id="demoDoc">Open a sample .md →</qa-btn>
+      </div>
+
+      <div class="sec"><h2>shared CSS patterns (class-based, no custom element)</h2>
+        <p class="pagesub">Plain class selectors keyed by their historic names so screens use them without markup changes. Add a new pattern here only when 2+ screens already share the markup.</p>
+
+        <h3 style="font-size:.8rem;margin:.5rem 0 .35rem;color:var(--muted)">.badge — status pills</h3>
+        <div class="row">
+          <span class="badge pass">PASS</span>
+          <span class="badge fail">FAIL</span>
+          <span class="badge blocked">BLOCKED</span>
+          <span class="badge muted">In review</span>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.stat — number + label tile (used by dashboard headers)</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:560px">
+          <div class="stat"><div class="n">14</div><div class="l">Total projects</div></div>
+          <div class="stat"><div class="n">3</div><div class="l">In review</div></div>
+          <div class="stat"><div class="n">92%</div><div class="l">Pass rate</div></div>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.search — small free-text input (app-shell topbar)</h3>
+        <div class="search" style="max-width:340px">Search projects…</div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.table / .thead / .trow — list table</h3>
+        <p class="pagesub" style="margin:0 0 .5rem">Chrome from <code>components.css</code>; <code>grid-template-columns</code> stays per-screen (each table has different ratios).</p>
+        <div class="table" style="max-width:640px">
+          <div class="thead" style="grid-template-columns:2fr .8fr .8fr">
+            <div>Project</div><div>Type</div><div>Status</div>
+          </div>
+          <div class="trow" style="grid-template-columns:2fr .8fr .8fr">
+            <div>Guest Auth Portal</div><div>Type D</div><div><span class="badge pass">PASS</span></div>
+          </div>
+          <div class="trow" style="grid-template-columns:2fr .8fr .8fr">
+            <div>Login Rate Limiting</div><div>Type A</div><div><span class="badge fail">FAIL</span></div>
+          </div>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.cfgmodal / .amodal — modal overlay (backdrop only)</h3>
+        <p class="pagesub" style="margin:0 0 .5rem">Two historic names for the same backdrop. The window inside (<code>.cfgwin</code> / <code>.awin</code>) stays screen-local — each modal's content differs.</p>
+        <code style="display:block;font-size:.72rem;background:var(--surface);padding:.5rem .7rem;border-radius:6px;border:1px solid var(--border);font-family:ui-monospace,Menlo,monospace">&lt;div class="cfgmodal open"&gt;…&lt;div class="cfgwin"&gt;screen-specific&lt;/div&gt;…&lt;/div&gt;</code>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.envbar / .cfgbar — summary bar (top-of-page meta strip)</h3>
+        <p class="pagesub" style="margin:0 0 .5rem">Chrome from <code>components.css</code>; per-screen deltas (gap / align-items / margin-bottom) stay local.</p>
+        <div class="envbar" style="align-items:center;gap:1.5rem">
+          <div><div style="font-size:.625rem;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:.4rem">ACTIVE ENVIRONMENT</div><div style="font-weight:600">Staging</div></div>
+          <div><div style="font-size:.625rem;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:.2rem">WORKSPACE</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:.8125rem">docs/stories/</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <qa-drawer>
+    <div class="msg user">Plan the tests for STORY-001 — see the stories in the studio.</div>
+    <div class="act">▸ read story · detected Type B · drafted plan · ran GATE 1</div>
+    <div class="msg bot">GATE 1 passed. Approve to generate the cases, or tell me what to change.</div>
+    <qa-gate-card verdict="pass" title="GATE 1 — Plan completeness"
+      detail="C1 coverage · C2 overlap · C3 traceability · C4 naming · C5 fidelity."></qa-gate-card>
+  </qa-drawer>
+  <qa-md-viewer></qa-md-viewer>
+</qa-app>
+<script>
+ document.addEventListener('DOMContentLoaded', () => {
+   document.getElementById('demoDoc').onclick = () => qaDoc.open({
+     name: 'sample.md',
+     rendered: '<h1>Sample document</h1><p>This is <b>rendered</b> markdown from <code>qa-md-viewer</code>.</p><h2>Section</h2><ul><li>one</li><li>two</li></ul>',
+     source: '# Sample document\n\nThis is **rendered** markdown from `qa-md-viewer`.\n\n## Section\n- one\n- two\n'
+   });
+ });
+</script>
+</body>
+</html>
