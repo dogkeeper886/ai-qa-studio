@@ -30,4 +30,4 @@ idea: the dashboard reads the markdown and shows the project's state.
 ## Status
 
 - Created: 2026-06-02
-- Issues: none
+- Issues: #4

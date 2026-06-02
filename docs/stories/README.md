@@ -22,6 +22,7 @@ So the split is:
 /dw-story         → writes the story (the need)           → docs/stories/STORY-XXX.md
 /dw-review-story  → checks completeness, keeps it a goal  → revises in place
 /dw-tasks         → opens GitHub issue(s) from the story  → spec + history live on the issue
+/dw-review-tasks  → checks the issues cover the story     → fixes them in place
 /dw-implement     → branch, build, the back-and-forth     → recorded on the issue
 ```
 
