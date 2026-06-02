@@ -19,7 +19,10 @@ via "Fixes #N" for auto-closure. Updates issue labels to reflect PR status.
         ├─► Step 1: Verify Readiness
         │   - Confirm you're on the correct branch (issue-<N>-<slug>)
         │   - Run: git status — check for uncommitted changes
-        │   - Run: git log --oneline main..HEAD — review commits
+        │   - Review the branch's commits against the repo's default branch —
+        │     derive it, don't hardcode `main` (gh repo view --json
+        │     defaultBranchRef -q .defaultBranchRef.name):
+        │     git log --oneline <default>..HEAD
         │   - If no argument given, infer issue number from branch name
         │   - Run: gh issue view <N> — check if title contains [STORY-XXX]
         │
@@ -58,7 +61,10 @@ via "Fixes #N" for auto-closure. Updates issue labels to reflect PR status.
         │
         └─► Step 6: Report
             - Show the PR URL to the user
-            - Suggest next step: /dw-review-pr <PR>
+            - Stop here — don't auto-advance. The PR now waits for a HUMAN to
+              review and test it. Merge with /dw-merge <PR> only once a human is
+              satisfied. (The change's substance was already gated locally by
+              /dw-review-implement before the PR.)
 
 ---
 
@@ -69,7 +75,7 @@ via "Fixes #N" for auto-closure. Updates issue labels to reflect PR status.
 **Agent verifies, pushes, creates PR:**
 
     $ git status
-    $ git log --oneline main..HEAD
+    $ git log --oneline <default-branch>..HEAD
     $ git push -u origin issue-27-release-notes
     $ gh pr create --title "Add release notes generator command" --body "..."
     $ gh issue edit 27 --remove-label "status:in-progress" --add-label "status:needs-review"
@@ -78,7 +84,7 @@ via "Fixes #N" for auto-closure. Updates issue labels to reflect PR status.
 **Output:**
 
     PR #30 created: https://github.com/owner/repo/pull/30
-    Next: /dw-review-pr 30
+    A human reviews + tests it; merge with /dw-merge 30 when satisfied.
 
 ---
 

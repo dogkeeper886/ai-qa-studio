@@ -1,0 +1,25 @@
+/* AI QA Studio — design tokens (single source). Neutral black/grey/white + semantic. */
+.theme-light{
+  --bg:hsl(0 0% 96%); --surface:hsl(0 0% 100%); --raised:hsl(0 0% 100%);
+  --fg:hsl(0 0% 12%); --muted:hsl(0 0% 42%); --border:hsl(0 0% 88%);
+  --accent:hsl(0 0% 14%); --on-accent:hsl(0 0% 98%);
+  --success:hsl(145 60% 32%); --warning:hsl(38 90% 40%); --danger:hsl(2 70% 45%);
+  --on-status:hsl(0 0% 100%);
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 6px 16px rgba(0,0,0,.05);
+  --shadow-sm:0 1px 1px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.05),0 16px 32px rgba(0,0,0,.10);
+  --inset:inset 0 1px 1px rgba(0,0,0,.05),inset 0 -1px 0 rgba(255,255,255,.6);
+  --field-border:hsl(0 0% 72%); --field-ring:hsl(0 0% 85%);
+}
+.theme-dark{
+  --bg:hsl(0 0% 9%); --surface:hsl(0 0% 14%); --raised:hsl(0 0% 18%);
+  --fg:hsl(0 0% 96%); --muted:hsl(0 0% 62%); --border:hsl(0 0% 24%);
+  --accent:hsl(0 0% 96%); --on-accent:hsl(0 0% 12%);
+  --success:hsl(145 55% 60%); --warning:hsl(38 90% 62%); --danger:hsl(2 75% 66%);
+  --on-status:hsl(0 0% 10%);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.35);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow-lg:0 4px 8px rgba(0,0,0,.4),0 18px 36px rgba(0,0,0,.5);
+  --inset:inset 0 1px 2px rgba(0,0,0,.5),inset 0 -1px 0 rgba(255,255,255,.04);
+  --field-border:hsl(0 0% 40%); --field-ring:hsl(0 0% 30%);
+}

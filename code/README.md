@@ -8,7 +8,7 @@ Live at `../r1-qa-studio/` on this machine:
 
 | What | Where |
 |------|-------|
-| Wireframes + component framework | `../r1-qa-studio/design/wireframes/` — `tokens.css`, `components.css`, `components.js`, `components.html`, `s*-*.html` screens |
+| Wireframes + component framework | **ported here → [`../design/wireframes/`](../design/wireframes/)** (de-R1'd, issue #6). Sibling `../r1-qa-studio/design/wireframes/` still holds the `s*-*.html` screens not yet ported. |
 | Web GUI (React + Vite) | `../r1-qa-studio/frontend/` |
 | Agent runtime / hub (Agent SDK, TS) | `../r1-qa-studio/hub/` |
 | Desktop shell (Tauri) | `../r1-qa-studio/src-tauri/` |

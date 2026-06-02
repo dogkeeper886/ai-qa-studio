@@ -13,7 +13,7 @@ Updates the story file with created issue numbers.
 
 Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue):
 
-    dw-story → dw-tasks → dw-implement → dw-create-pr → dw-review-pr → dw-merge
+    dw-story → dw-tasks → dw-implement → dw-create-pr → [human review + test] → dw-merge
 
 ---
 

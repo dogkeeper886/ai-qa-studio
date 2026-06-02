@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI QA Studio — Stories</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="components.js"></script>
+<style>
+ /* screen-local only — shared chrome (incl. .pagehead/.pagesub) comes from components.css */
+ /* stories table column ratios (chrome is shared; ratios stay per-screen) */
+ .stories-grid{grid-template-columns:7rem 2fr 8rem}
+ .trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+ .trow .stitle{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .trow .read{justify-self:end;color:var(--muted);font-size:.75rem}
+ .trow:hover .read{color:var(--fg)}
+</style>
+</head>
+<body class="theme-light">
+<qa-app>
+  <qa-sidebar active="stories"></qa-sidebar>
+  <main>
+    <qa-topbar crumb="AI QA Studio / Stories" no-assistant></qa-topbar>
+    <div class="qa-content">
+      <h1 class="pagehead">Stories</h1>
+      <p class="pagesub">The feature requests in this project, read straight from <code>docs/stories/</code> — the source of truth. Open one to read it without leaving the studio.</p>
+
+      <div class="table">
+        <div class="thead stories-grid"><div>ID</div><div>Title</div><div></div></div>
+        <div class="trow stories-grid" data-story="STORY-001">
+          <div class="sid">STORY-001</div>
+          <div class="stitle">See the project's stories in the studio</div>
+          <div class="read">Read →</div>
+        </div>
+        <div class="trow stories-grid" data-story="STORY-002">
+          <div class="sid">STORY-002</div>
+          <div class="stitle">Talk to the AI agent in the studio</div>
+          <div class="read">Read →</div>
+        </div>
+        <div class="trow stories-grid" data-story="STORY-003">
+          <div class="sid">STORY-003</div>
+          <div class="stitle">Stand up the studio foundation</div>
+          <div class="read">Read →</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <qa-md-viewer></qa-md-viewer>
+</qa-app>
+<script>
+ // Wireframe stand-in for what the hub will serve from docs/stories/*.md.
+ const STORIES = {
+   'STORY-001': {
+     name: 'docs/stories/STORY-001.md',
+     rendered: `<h1>STORY-001: See the project's stories in the studio</h1>
+       <h2>User Story</h2>
+       <p>As a person using the studio, I want to see the stories that exist in this project in the web GUI, so that I can understand what's planned without opening raw markdown files.</p>
+       <h2>The Need</h2>
+       <p>Stories live as markdown files in <code>docs/stories/</code> — the source of truth. Today the only way to see them is to open the files directly. The studio is meant to be the product face over that source of truth, so the first thing it should do is make the existing stories visible in one place.</p>
+       <h2>Success Looks Like</h2>
+       <ul>
+         <li>Opening the studio shows the stories that exist in <code>docs/stories/</code>.</li>
+         <li>Each story is identifiable (its ID and title) and its content is readable without leaving the GUI.</li>
+         <li>When a story is added or changed in <code>docs/stories/</code>, what the studio shows reflects it.</li>
+       </ul>
+       <h2>Status</h2>
+       <ul><li>Created: 2026-06-02</li><li>Issues: #4</li></ul>`,
+     source: `# STORY-001: See the project's stories in the studio\n\n## User Story\n\nAs a person using the studio,\nI want to see the stories that exist in this project in the web GUI,\nSo that I can understand what's planned without opening raw markdown files.\n\n## The Need\n\nStories live as markdown files in \`docs/stories/\` — the source of truth...\n\n## Status\n\n- Created: 2026-06-02\n- Issues: #4\n`
+   },
+   'STORY-002': {
+     name: 'docs/stories/STORY-002.md',
+     rendered: `<h1>STORY-002: Talk to the AI agent in the studio</h1>
+       <h2>User Story</h2>
+       <p>As a person using the studio, I want to talk to the AI agent in a panel and watch its work live, so that I can drive QA/dev tasks from inside the studio instead of a separate IDE.</p>
+       <h2>The Need</h2>
+       <p>The studio's whole premise is AI-driven, but there's no way to actually <em>converse</em> with the agent in it yet. The user needs to send a request, see what the agent is doing as it works, answer it when it needs a decision, and review what it produces — all without leaving the product.</p>
+       <h2>Status</h2>
+       <ul><li>Created: 2026-06-02</li><li>Issues: none</li></ul>`,
+     source: `# STORY-002: Talk to the AI agent in the studio\n\n## User Story\n\nAs a person using the studio,\nI want to talk to the AI agent in a panel and watch its work live,\nSo that I can drive QA/dev tasks from inside the studio instead of a separate IDE.\n\n## Status\n\n- Created: 2026-06-02\n- Issues: none\n`
+   },
+   'STORY-003': {
+     name: 'docs/stories/STORY-003.md',
+     rendered: `<h1>STORY-003: Stand up the studio foundation</h1>
+       <h2>User Story</h2>
+       <p>As the team building AI QA Studio, I want a running studio app to build features on, so that feature stories (seeing the stories, chatting with the agent) have a foundation instead of each one re-standing-up the app.</p>
+       <h2>Success Looks Like</h2>
+       <ul>
+         <li>The studio <strong>boots locally</strong> and opens to a working shell.</li>
+         <li>The <strong>design framework renders</strong> (the shared tokens/components, not bespoke styling).</li>
+         <li>The <strong>hub serves the workspace</strong> files and can <strong>run an agent session</strong>.</li>
+       </ul>
+       <h2>Status</h2>
+       <ul><li>Created: 2026-06-02</li><li>Issues: #2, #3</li></ul>`,
+     source: `# STORY-003: Stand up the studio foundation\n\n## User Story\n\nAs the team building AI QA Studio,\nI want a running studio app to build features on,\nSo that feature stories have a foundation instead of each one re-standing-up the app.\n\n## Status\n\n- Created: 2026-06-02\n- Issues: #2, #3\n`
+   }
+ };
+ document.addEventListener('DOMContentLoaded', () => {
+   document.querySelectorAll('.trow[data-story]').forEach(row => {
+     row.onclick = () => qaDoc.open(STORIES[row.getAttribute('data-story')]);
+   });
+ });
+</script>
+</body>
+</html>
