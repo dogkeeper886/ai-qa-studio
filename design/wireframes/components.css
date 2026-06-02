@@ -9,6 +9,12 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
   background:var(--bg);color:var(--fg);font-size:.875rem}
 .qa-muted{color:var(--muted)}
 
+/* ---- page header (.pagehead / .pagesub) — a screen's title + sub-text block.
+        Promoted from per-screen <style> once 2+ screens shared it. ---- */
+.pagehead{font-size:1.25rem;font-weight:700;margin:0 0 .25rem}
+.pagesub{color:var(--muted);font-size:.8125rem;margin:0 0 1.5rem;line-height:1.5}
+.pagesub code{font-family:ui-monospace,Menlo,monospace;font-size:.78rem}
+
 /* ---- qa-app: full-height shell ---- */
 qa-app{display:flex;height:100vh;overflow:hidden}
 qa-app > main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}

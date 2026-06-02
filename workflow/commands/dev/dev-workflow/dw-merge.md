@@ -67,7 +67,7 @@ and issue labels. The linked issue auto-closes via "Fixes #N" in the PR body.
 
 **Agent verifies, merges, cleans up:**
 
-    $ gh pr view 30 --json reviewDecision,mergeStateStatus,headRefName
+    $ gh pr view 30 --json mergeStateStatus,headRefName,reviewDecision  # mergeable? (don't gate on self-approval)
     $ gh pr checks 30
     $ gh pr merge 30 --merge --delete-branch
     $ gh issue edit 27 --remove-label "status:needs-review"
