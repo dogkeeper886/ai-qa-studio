@@ -76,7 +76,8 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
             - Show table of created issues:
               | Issue | Title | Type | Priority |
             - Suggest implementation order based on dependencies
-            - Suggest: /dw-implement <N> to start on the first task
+            - Suggest: /dw-review-tasks STORY-XXX to gate the breakdown, then
+              /dw-implement <N> to start on the first task
 
 ---
 
