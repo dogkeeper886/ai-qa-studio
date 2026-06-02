@@ -23,7 +23,7 @@ and prepares for PR creation when done.
         │   - Check labels — type and priority should already be set
         │   - Check for linked/blocking issues
         │   - If issue title contains [STORY-XXX], read docs/stories/STORY-XXX.md
-        │     for full context (user story, broader acceptance criteria, related tasks)
+        │     for full context (the user story and the need it serves)
         │   - If anything is unclear, ask the user before starting
         │
         ├─► Step 2: Create Branch
@@ -44,8 +44,8 @@ and prepares for PR creation when done.
         ├─► Step 4a: On Success
         │   - Comment on issue:
         │     gh issue comment <N> --body "Implementation complete, tests passing. Ready for PR."
-        │   - If linked to STORY-XXX, update docs/stories/STORY-XXX.md:
-        │     check off completed acceptance criteria for this task
+        │   - Progress is recorded on the issue, not the story — the story stays the
+        │     stable statement of the need
         │   - Proceed to /dw-create-pr
         │
         ├─► Step 4b: On Failure

@@ -5,7 +5,6 @@ description: |
   a test case page to Confluence. Use when a QA engineer wants to design cases,
   create test cases, write test cases, or expand test scenarios into detailed
   steps.
-disable-model-invocation: true
 tools:
   - mcp-atlassian:confluence_create_page
   - mcp-atlassian:confluence_get_page

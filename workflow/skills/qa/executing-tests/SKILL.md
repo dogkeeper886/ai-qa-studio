@@ -4,7 +4,6 @@ description: |
   Executes test cases from a TestLink plan using browser automation and records
   pass/fail results per case. Use when a QA engineer wants to execute tests,
   run tests, execute a test plan, or run test cases against an application.
-disable-model-invocation: true
 tools:
   - testlink-mcp:get_test_cases_for_test_plan
   - testlink-mcp:read_test_case

@@ -7,7 +7,10 @@ Create a user story file from user input.
 
 ## PURPOSE
 
-Transform user input into a structured user story file saved to `docs/stories/`.
+Capture the user's **need** as a story file saved to `docs/stories/`. A story is a
+**goal, not a spec** — it states what the user needs and why, and leaves the *how*
+open. Implementation detail (affected files, APIs, design) is worked out later on the
+GitHub issue, not here. See `docs/stories/README.md`.
 
 ---
 
@@ -19,14 +22,16 @@ Check `docs/stories/` for existing story files. Generate the next sequential ID:
 - Format: `STORY-XXX` (e.g., STORY-001, STORY-002)
 - If no stories exist, start with STORY-001
 
-### Step 2: Clarify Requirements
+### Step 2: Clarify the Need
 
-If the user input is vague, ask clarifying questions:
-- What is the expected behavior?
-- What systems or resources does this affect?
-- Are there any edge cases to consider?
+If the user input is vague, ask questions that sharpen the **need** — not the
+implementation:
+- Who is the user, and what are they trying to achieve?
+- Why does it matter — what's the benefit or the problem behind the request?
+- What would success look like from their point of view?
 
-If the input is clear enough, proceed directly.
+Do **not** ask about affected files, edge cases, or design here — that gets worked
+out on the issue. If the need is clear enough, proceed directly.
 
 ### Step 3: Write Story File
 
@@ -41,32 +46,32 @@ As a [role],
 I want to [action],
 So that [benefit].
 
-## Description
+## The Need
 
-[Expanded description from user input]
+[The problem behind the request — what the user is trying to achieve and why, in
+their terms.]
 
-## Acceptance Criteria
+## Success Looks Like
 
-- [ ] [Criterion 1]
-- [ ] [Criterion 2]
-- [ ] [Criterion 3]
+[The outcome that means this is done, described as observable user-facing results —
+not implementation steps.]
 
-## Technical Notes
+## Open Questions
 
-- Affected files: [list of files likely to change]
-- Dependencies: [commands, MCP tools, or APIs involved]
+[What still has to be figured out — resolved later on the GitHub issue via research,
+proof of concept, or clarification. The "how" goes here, not above.]
 
 ## Status
 
 - Created: [date]
-- Tasks: none
-- Tests: none
+- Issues: none
 ```
 
 ### Step 4: Confirm
 
 Show the user the created story and suggest next steps:
-- `/dw-plan` to break into GitHub issues
+- `/dw-review-story STORY-XXX` to check it's complete and still a goal, not a spec
+- `/dw-tasks STORY-XXX` to open GitHub issue(s) where the *how* gets worked out
 - `/tw-plan-init` to create a test plan (if QA-related)
 
 ---

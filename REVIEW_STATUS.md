@@ -14,10 +14,11 @@ Legend: `[ ]` not started · `[~]` in review · `[x]` ported & reference deleted
 - [ ] `executing-tests`
 - [ ] `planning-tests`
 - [ ] `receiving-tickets`
-- [ ] `reviewing-commands`
+- [x] `reviewing-commands` — superseded by `reviewing-artifacts` (not ported; drop from `reference/`)
 - [ ] `reviewing-typography`
+- [ ] `reviewing-artifacts` — new, replaces auditing-artifacts/auditing-readme/reviewing-commands/command-review
 - [ ] `syncing-testlink`
-- [ ] `tracking-changes`
+- [x] `tracking-changes` — removed; dashboard derives status from artifacts (no separate tracking ledger)
 
 ## (a) workflow — commands  → `workflow/commands/`
 
@@ -38,10 +39,10 @@ Legend: `[ ]` not started · `[~]` in review · `[x]` ported & reference deleted
 - [ ] `dev-workflow/dw-test-design`
 
 ### github
-- [ ] `github/gh-close`
-- [ ] `github/gh-init`
-- [ ] `github/gh-status`
-- [ ] `github/gh-track`
+- [x] `github/gh-close` — removed with `tracking-changes` (the ledger it drove)
+- [x] `github/gh-init` — removed with `tracking-changes`
+- [x] `github/gh-status` — removed with `tracking-changes`
+- [x] `github/gh-track` — removed with `tracking-changes`
 
 ### jira
 - [ ] `jira/jr-trace-docs`
@@ -99,7 +100,7 @@ Legend: `[ ]` not started · `[~]` in review · `[x]` ported & reference deleted
 - [ ] `test-workflow/tw-templates`
 
 ### utility
-- [ ] `utility/command-review`
+- [x] `utility/command-review` — superseded by `reviewing-artifacts` (not ported; drop from `reference/`)
 - [ ] `utility/compare`
 - [ ] `utility/evolve`
 - [ ] `utility/review-install`

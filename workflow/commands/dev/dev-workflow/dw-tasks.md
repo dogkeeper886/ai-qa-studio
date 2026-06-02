@@ -24,7 +24,8 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
         ├─► Step 1: Read the Story
         │   - If no story ID provided, list files in docs/stories/ and ask user to pick
         │   - Read docs/stories/STORY-XXX.md
-        │   - Extract: title, acceptance criteria, technical notes
+        │   - Extract: the need and what success looks like (the story holds the
+        │     goal, not a spec — there are no technical notes to copy out)
         │   - If the story file doesn't exist, report and stop
         │
         ├─► Step 2: Break into Tasks
@@ -52,15 +53,16 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
         ├─► Step 5: Create GitHub Issues
         │   - One issue per task
         │   - Title: [STORY-XXX] Task description
-        │   - Body:
+        │   - Body — start lean; the issue grows as the *how* is worked out
+        │     (research, PoC, clarification, fixes) and recorded in comments:
         │       ## Context
         │       Part of [STORY-XXX](../docs/stories/STORY-XXX.md)
         │
-        │       ## Acceptance Criteria
-        │       - [ ] [criterion from task breakdown]
+        │       ## Goal
+        │       [what this task achieves, from the story's need]
         │
-        │       ## Technical Notes
-        │       [relevant notes from the story]
+        │       ## Done When
+        │       - [ ] [observable done condition for this task]
         │   - Labels: type + priority (infer from story content)
         │   - Link related issues: "Part of STORY-XXX"
         │
@@ -68,8 +70,7 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
         │   - Update the Status section in docs/stories/STORY-XXX.md:
         │     ## Status
         │     - Created: [original date]
-        │     - Tasks: #1, #2, #3
-        │     - Tests: none
+        │     - Issues: #1, #2, #3
         │
         └─► Step 7: Report
             - Show table of created issues:
@@ -89,7 +90,7 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
     $ gh issue list --search "[STORY-003]" --state all
     $ gh issue create --title "[STORY-003] Add input validation" \
         --label "enhancement" --label "priority:high" \
-        --body "## Context\nPart of STORY-003\n\n## Acceptance Criteria\n..."
+        --body "## Context\nPart of STORY-003\n\n## Goal\n...\n\n## Done When\n- [ ] ..."
     $ gh issue create --title "[STORY-003] Add error response formatting" \
         --label "enhancement" --label "priority:medium" \
         --body "..."
@@ -98,8 +99,7 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
 
     ## Status
     - Created: 2026-04-01
-    - Tasks: #15, #16
-    - Tests: none
+    - Issues: #15, #16
 
 **Output:**
 
@@ -118,5 +118,6 @@ Fits between `/dw-story` (creates story) and `/dw-implement` (works on an issue)
 - Uses `gh` CLI for issue operations
 - Story files live in `docs/stories/STORY-XXX.md` (created by /dw-story)
 - Issue titles use `[STORY-XXX]` prefix for traceability
-- The story file is the persistent record linking requirements → tasks → tests
+- The story file records the need; the issue is the single source of truth for *how*,
+  growing with research, decisions, and fixes as the work proceeds
 ```

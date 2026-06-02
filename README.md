@@ -1,8 +1,8 @@
 # AI QA Studio
 
-> Working name — easily renamed. See [`docs/product/04_Decision_Log.md`](docs/product/04_Decision_Log.md).
+> Working name — easily renamed.
 
-A **local-first desktop application** with a **web GUI** that runs the [`ai-qa-workflow`](https://github.com/dogkeeper886/ai-qa-workflow) AI QA methodology as a *product*: point it at a ticket, get a reviewed test plan and test cases.
+A **local-first**, **web-GUI** product that runs the [`ai-qa-workflow`](https://github.com/dogkeeper886/ai-qa-workflow) AI QA methodology as an **AI-driven framework that closes the Dev → QA → PM loop** — markdown files are the source of truth, and a dashboard surfaces project status (dev-story implementation, test plans, execution).
 
 **Status:** Planning / documentation. No application code yet.
 
@@ -17,7 +17,8 @@ This is the **target-agnostic, open-source studio**. The RUCKUS One build, [`r1-
 
 ```
 ai-qa-studio/
-├── docs/product/        # founding docs — vision, architecture, MVP, profiles, decisions
+├── docs/product/        # the product vision — the overall view (goals, not specs)
+├── docs/stories/        # feature requests as goals (the how lives in GitHub issues)
 ├── docs/methodology/    # the original ai-qa-workflow CLAUDE.md / README, preserved
 ├── .claude/skills/      # QA lifecycle skills — the agent's brain (copied from ai-qa-workflow)
 ├── .claude/commands/    # slash commands (copied from ai-qa-workflow)
@@ -30,14 +31,10 @@ ai-qa-studio/
 
 | Doc | What |
 |-----|------|
-| [00 Vision & Scope](docs/product/00_Vision_and_Scope.md) | Problem, vision, principles, in/out of scope |
-| [01 Architecture](docs/product/01_Architecture.md) | Layers, tech choices, the local-bound constraint |
-| [02 MVP Scope](docs/product/02_MVP_Scope.md) | The first limited function to ship |
-| [03 Profiles & Relationship](docs/product/03_Profiles_and_Relationship.md) | Generic core vs target profiles; relationship to `r1-qa-studio` |
-| [04 Decision Log](docs/product/04_Decision_Log.md) | Decisions made so far + open questions |
+| [00 Vision & Scope](docs/product/00_Vision_and_Scope.md) | The vision, the repos it binds, the problem, guidelines, scope |
 
 ## Relationship to `ai-qa-workflow` and `r1-qa-studio`
 
 - **`ai-qa-workflow`** — the methodology (skills, commands, framework docs). Source of truth for the workflow; copied here as the product's embedded knowledge.
-- **`ai-qa-studio`** (this repo) — the generic *product* shell built around that methodology.
+- **`ai-qa-studio`** (this repo) — the product that binds the methodology and the test framework ([`test-framework-template`](https://github.com/dogkeeper886/test-framework-template)) into one AI-driven loop, with a dashboard over markdown as the source of truth.
 - **`r1-qa-studio`** — the RUCKUS One build of the same idea; consumes this core as its target-agnostic base and adds an R1 profile (R1 navigation map, R1 MCP servers, R1 terminology).

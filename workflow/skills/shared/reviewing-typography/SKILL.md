@@ -7,7 +7,6 @@ description: |
   length and shape. Use when a QA engineer wants to review typography, audit
   page design, check Confluence formatting quality, or after running
   planning-tests or designing-cases against real content.
-disable-model-invocation: true
 tools:
   - mcp-atlassian:confluence_get_page
   - mcp-atlassian:confluence_update_page

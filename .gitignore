@@ -3,3 +3,8 @@
 
 # Local-only secrets / integration config — never commit
 config/
+
+# Local run-surface — commands/skills are linked (or copied) here on demand from
+# workflow/ (the committed source of truth). Never committed; nothing to keep in sync.
+.claude/commands/
+.claude/skills/
