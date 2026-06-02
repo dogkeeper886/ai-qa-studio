@@ -58,7 +58,7 @@ First, **collect scope**: the screen(s) named by the user, or the wireframes tou
 Then **view the render** — don't read the markup and assume. Serve and screenshot:
 
 ```
-python3 -m http.server 8765 --directory design/wireframes --bind 127.0.0.1
+scripts/wireframes.sh        # serves design/wireframes/ at http://localhost:8765 (container)
 ```
 
 Render with a headless browser (`google-chrome --headless` is installed here) at
