@@ -58,7 +58,8 @@ Fits between `/dw-implement` (does the work) and `/dw-create-pr` (opens the PR):
         │   - [ ] The issue records the work (start / fixes / result) per /dw-implement
         │
         ├─► Step 5: Decision
-        │   - PASS: delivers the issue, surgical, fits → suggest /dw-create-pr <N>
+        │   - PASS: delivers the issue, surgical, fits → ready for a HUMAN to
+        │     review + test, then open a PR (/dw-create-pr <N>) — don't auto-advance
         │   - REVISE: specific findings — fix on the branch, smallest blast radius
         │     first (remove leaked scope, fill a gap, tighten); commit
         │   - HAND BACK: the approach is wrong (wrong design, misread the issue) →
@@ -93,7 +94,7 @@ Fits between `/dw-implement` (does the work) and `/dw-create-pr` (opens the PR):
 **Output:**
 
     PASS — #6 delivers the issue and stays surgical.
-    Next: /dw-create-pr 6
+    A human reviews + tests; open a PR with /dw-create-pr 6 when ready.
 
 (Illustrative — a clean implementation. Real reviews often return REVISE.)
 
@@ -104,10 +105,10 @@ Fits between `/dw-implement` (does the work) and `/dw-create-pr` (opens the PR):
 - Uses `gh` to read the issue; reads the branch diff with `git` — read-mostly
 - Reviews the local implementation result before it becomes a PR — pairs with
   /dw-implement the way /dw-review-tasks pairs /dw-tasks
-- Stage split (so the substance isn't checked twice): this gate works the local
-  branch diff against the issue's "Done When" before publishing; the PR-stage review
-  works the published PR — its mechanics (linkage, title, labels) and CI. Keep
-  code-substance findings here; don't duplicate this checklist downstream
+- This is the substance gate (delivers + surgical), run on the local diff before
+  the PR — there is no separate PR-review command. PR mechanics (linkage, labels)
+  are handled by /dw-create-pr and /dw-merge, and a human reviews + tests the PR
+  before merge.
 - Surgical-change bar mirrors the project's CLAUDE.md (every changed line traces to
   the request; clean up only your own orphans)
 - When fixing, change only what a finding points to — don't rewrite sound work

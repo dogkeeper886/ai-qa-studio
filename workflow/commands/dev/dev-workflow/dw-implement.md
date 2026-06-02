@@ -64,7 +64,8 @@ and prepares for PR creation when done.
         │
         └─► Step 4c: On Partial Fix
             - Comment: what was fixed, what remains, blockers
-            - Proceed to /dw-create-pr if the partial fix is independently useful
+            - If the partial fix is independently useful: run /dw-review-implement,
+              then a human reviews + tests before a PR is opened (/dw-create-pr)
             - Create follow-up issues for remaining work
 
 ---
@@ -95,7 +96,8 @@ GitHub auto-creates backlinks when issues reference each other.
 
     $ gh issue comment 27 --body "Implementation complete, tests passing. Ready for PR."
 
-**Next step:** /dw-review-implement 27 (gate the changes), then /dw-create-pr 27
+**Next step:** /dw-review-implement 27 (local gate). Then a human reviews + tests
+before a PR is opened (/dw-create-pr 27) — the workflow doesn't auto-advance to a PR.
 
 ---
 

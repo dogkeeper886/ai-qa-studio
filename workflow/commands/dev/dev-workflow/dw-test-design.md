@@ -23,8 +23,10 @@ Fits into the dev-workflow chain after /dw-implement and before /dw-create-pr.
         ├─► Step 1: Understand What Was Implemented
         │   - Run: gh issue view <N>
         │   - Read the acceptance criteria and technical notes
-        │   - Run: git log --oneline main..HEAD  (see what changed)
-        │   - Run: git diff main --stat  (see which files changed)
+        │   - See what changed vs the repo's default branch — derive it, don't
+        │     hardcode `main` (gh repo view --json defaultBranchRef -q
+        │     .defaultBranchRef.name): git log --oneline <default>..HEAD and
+        │     git diff <default> --stat
         │   - Identify what needs test coverage
         │
         ├─► Step 2: Detect Test Infrastructure
