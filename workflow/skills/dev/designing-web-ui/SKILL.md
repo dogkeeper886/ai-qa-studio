@@ -110,7 +110,7 @@ invent product scope.
    gate views it):
 
    ```
-   python3 -m http.server 8765 --directory design/wireframes --bind 127.0.0.1
+   scripts/wireframes.sh        # serves design/wireframes/ at http://localhost:8765 (container)
    ```
 
    Then render with a headless browser — `google-chrome --headless` is installed here
