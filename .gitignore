@@ -8,3 +8,6 @@ config/
 # workflow/ (the committed source of truth). Never committed; nothing to keep in sync.
 .claude/commands/
 .claude/skills/
+
+# Playwright MCP artifacts (snapshots, console logs, screenshots) — local only
+.playwright-mcp/
