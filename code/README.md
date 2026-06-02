@@ -16,4 +16,4 @@ Live at `../r1-qa-studio/` on this machine:
 
 ## Plan
 
-The component framework, tokens, and GUI shell are **generic core** (see [`../docs/product/03_Profiles_and_Relationship.md`](../docs/product/03_Profiles_and_Relationship.md)). When they stabilise, **port them here deliberately** — de-R1'd, one piece at a time — rather than syncing raw. Until then, reference the sibling folder.
+The component framework, tokens, and GUI shell are **generic core**. When they stabilise, **port them here deliberately** — de-R1'd, one piece at a time — rather than syncing raw. Until then, reference the sibling folder.

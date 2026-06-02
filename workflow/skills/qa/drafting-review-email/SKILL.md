@@ -5,7 +5,6 @@ description: |
   test cases, using reviewers identified from the Jira ticket. Use when a QA
   engineer wants to draft a review email, create a meeting invite, send a
   review request, or notify stakeholders about test artifacts.
-disable-model-invocation: true
 tools:
   - mcp-atlassian:jira_get_issue
 ---

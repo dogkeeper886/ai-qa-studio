@@ -5,7 +5,6 @@ description: |
   claims via browser, and generating a PPTX file. Use when a QA engineer
   wants to create a demo, build a demo, make demo slides, or generate a
   demo presentation for a feature.
-disable-model-invocation: true
 tools:
   - playwright-mcp:browser_navigate
   - playwright-mcp:browser_snapshot

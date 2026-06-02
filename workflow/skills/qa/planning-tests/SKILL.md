@@ -5,7 +5,6 @@ description: |
   type, writing test plan sections, reviewing coverage, and publishing to
   Confluence. Use when a QA engineer wants to plan tests, create a test plan,
   write a test plan, or start test planning for a project.
-disable-model-invocation: true
 tools:
   - mcp-atlassian:confluence_create_page
   - mcp-atlassian:confluence_get_page

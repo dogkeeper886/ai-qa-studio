@@ -5,7 +5,6 @@ description: |
   importing test cases with HTML formatting, building a test plan, and assigning
   cases. Use when a QA engineer wants to sync TestLink, import to TestLink,
   upload test cases, or push test cases to TestLink.
-disable-model-invocation: true
 tools:
   - testlink-mcp:list_projects
   - testlink-mcp:create_test_suite

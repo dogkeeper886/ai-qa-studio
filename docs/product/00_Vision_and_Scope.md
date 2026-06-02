@@ -1,37 +1,58 @@
 # AI QA Studio — Vision & Scope
 
-## Problem
-
-The `ai-qa-workflow` methodology is delivered through **Claude Code, a general-purpose coding IDE**, plus `.claude/skills` and `.claude/commands`. It works, but it looks and feels like a developer tool, not a product. A non-developer QA team — or leadership evaluating it — doesn't see a product; they see an IDE with prompts in it.
-
-A full cloud SaaS is rejected as the *starting point*: parts of the workflow depend on **MCP integrations that must run locally** — a real browser (Playwright), lab hardware, databases behind a private network. A hosted backend cannot reach those.
-
 ## Vision
 
-**AI QA Studio** is a **local-first desktop application** with a **web GUI** that runs the AI QA workflow as a product. A QA engineer points it at a ticket and watches it produce a reviewed test plan and test cases, with the integrations the workflow needs available locally.
+An **AI-driven framework that closes the Dev → QA → PM loop**, delivered as one
+product that holds the pieces together. In the real world people reach for a single
+product that ties their process into one place. AI QA Studio is that face — the
+visual layer over an AI-driven QA process.
 
-It is **target-agnostic**: the methodology is general, and any specific system under test (a vendor platform, an internal app) is supplied as a pluggable **profile**, not baked into the core.
+## The repos it binds
 
-## Principles
+AI QA Studio (this repo) is the product face; it binds two sibling repos so the three
+work as one:
 
-1. **Local-first.** Ship as a local app so the integrations that need local access work. Cloud features come later, additively — not as a rewrite.
-2. **Reuse the methodology, replace the shell.** The skills/commands are portable prompt assets; the product is a new UI + runtime around the same brain. Don't rewrite the methodology.
-3. **Learn from products, adopt none.** Study existing tools for UX and architecture patterns; don't build *on* an off-the-shelf product — a net-new product won't get the fit it needs from one.
-4. **Target-agnostic core, profiles at the edge.** The workflow engine, GUI, and agent runtime know nothing about any one system under test. Vendor-specific assets (navigation maps, vendor MCP servers, terminology) live in a separable profile; secrets and customer data live in a private layer.
+| Repo | Role |
+|------|------|
+| `ai-qa-workflow` | the QA methodology — the agent's brain (skills / commands) |
+| `test-framework-template` | authoring and running the test scripts |
+| `ai-qa-studio` (this) | the **visual dashboard + studio** — the product face for QA activities |
 
-## In scope (v1)
+## The deep problem: proprietary coupling
 
-- Web GUI product face.
-- Local agent runtime executing the **document pipeline**: ticket → trace → plan → cases → review gates.
-- Reuse of the existing `ai-qa-workflow` skills/commands as the agent's knowledge.
+The current process leans on proprietary systems — chiefly **Jira** (intake / PM) and
+**Jenkins** (test execution / CI). Experience across the real stack (`testlink-mcp`,
+`wpa-mcp`, `ruckus1-mcp`, `ollama37`) shows both can go **GitHub-native**:
 
-## Runtime cost
+- **Jira → story files in GitHub.** Intake and PM become markdown files (stories) plus
+  issues — the model in [`../stories/`](../stories/).
+- **Jenkins → GitHub Actions runners.** Test scripts run through workflow action files
+  instead of Jenkins.
 
-AI QA Studio is a **third-party Agent SDK app**. Per Anthropic's 2026-05-13 policy (effective 2026-06-15), runtime LLM calls draw from the user's **Agent SDK credit pool** ($20 Pro / $100 Max 5x / $200 Max 20x) — a separate meter on the same Claude plan as interactive Claude Code, not from interactive subscription limits. Users can alternatively paste an `ANTHROPIC_API_KEY` for pay-as-you-go billing. The product is **editor-agnostic** (a desktop app, not an IDE plugin) — the same auth modes work for users on any editor or none. Decision: [D19 in 04](04_Decision_Log.md).
+With those replaced, the **last remaining piece is AI QA Studio**: the visual dashboard
+and studio over this GitHub-native, AI-driven pipeline.
 
-## Out of scope (v1 — deferred)
+## Guidelines
 
-- Execution phases that need local hardware surfaced in the GUI.
-- Multi-user / hosted / cloud.
-- Write-back automation to external test-management systems (read or sync may arrive earlier).
-- Any target-specific profile shipped in this core repo (profiles are separate — see [03](03_Profiles_and_Relationship.md)).
+Goals the product holds to — not a spec. The *how* is worked out in GitHub issues.
+
+- **Web GUI dashboard** — a visual studio for QA activities, not an IDE with prompts in
+  it. It reads the markdown source of truth and surfaces the project's status —
+  dev-story implementation, test plans, execution, and whatever else matters — so the
+  Dev → QA → PM loop is visible in one place. (Illustrative, not a fixed set or order.)
+- **Local markdown files as the source of truth** — stories and documents live as files
+  in the repo.
+- **AI-agent-driven documents** — the agent produces and drives the documents through
+  the pipeline.
+- **Execution via MCP** — local MCP servers (test management, browser, lab hardware)
+  supply the tools; this is why parts stay **local-first**. GitHub-native and local-first
+  coexist: files and CI live on GitHub, while the runners that touch local tools are
+  self-hosted.
+
+## Scope
+
+- These are **goals, not specs.** Implementation — and its history — lives in GitHub
+  issues. See [`../stories/`](../stories/).
+- **Open, revisit later:** how the bound repos relate once this is proven — backport the
+  solved pieces into `ai-qa-workflow` + `test-framework-template`, or make this repo the
+  upstream they consume. Too early to decide.

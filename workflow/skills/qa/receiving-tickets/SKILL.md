@@ -6,7 +6,6 @@ description: |
   Use when a QA engineer receives a new Jira ticket to work on, wants to
   start a project, trace a ticket, set up a project folder, or begin a
   QA project from a Jira issue.
-disable-model-invocation: true
 tools:
   - mcp-atlassian:jira_get_issue
   - mcp-atlassian:jira_search
