@@ -1,0 +1,22 @@
+{
+  "name": "aiqa-acp-poc",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Throwaway spike: prove the Zed-style ACP loop for AI QA Studio (issues #9, #10).",
+  "scripts": {
+    "probe": "tsx probe.ts",
+    "bridge": "tsx bridge.ts"
+  },
+  "dependencies": {
+    "@zed-industries/claude-code-acp": "0.16.2",
+    "@agentclientprotocol/sdk": "0.14.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
