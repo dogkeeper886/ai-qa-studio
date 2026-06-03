@@ -309,10 +309,26 @@ qa-md-viewer .mdwin.src .md, qa-md-viewer .md-viewer.src .md{display:none}
 qa-md-viewer .mdwin.src .mdsrc, qa-md-viewer .md-viewer.src .mdsrc{display:block}
 
 /* ---- drawer composer (richer dinput): context affordances + send ---- */
-qa-drawer .dctx{display:flex;gap:.4rem;margin-bottom:.5rem}
+qa-drawer .dctx{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-bottom:.5rem}
 qa-drawer .cchip{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:.2rem .6rem;
   font-size:.6875rem;font-weight:600;color:var(--muted);cursor:pointer}
 qa-drawer .cchip:hover{color:var(--fg);border-color:var(--accent)}
+/* attached-context chips (Add context) */
+qa-drawer .ctxchip{display:inline-flex;align-items:center;gap:.35rem;background:var(--bg);border:1px solid var(--border);
+  border-radius:999px;padding:.2rem .55rem;font-size:.6875rem;color:var(--fg)}
+qa-drawer .ctxchip .x{color:var(--muted);cursor:pointer;font-size:.6875rem}
+qa-drawer .ctxchip .x:hover{color:var(--danger)}
+/* /Commands picker + Add-context menu — a quiet popover above the composer */
+qa-drawer .dpicker,qa-drawer .dattach{margin-bottom:.5rem;padding:.3rem;display:flex;flex-direction:column;gap:.1rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg)}
+qa-drawer .dpicker[hidden],qa-drawer .dattach[hidden]{display:none}  /* display:flex above overrides the default [hidden] */
+qa-drawer .dpickhead{font-size:.625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:.3rem .5rem .15rem}
+qa-drawer .dpickrow{display:flex;align-items:baseline;gap:.5rem;text-align:left;background:transparent;border:none;
+  border-radius:7px;padding:.4rem .5rem;cursor:pointer;font:inherit;width:100%}
+qa-drawer .dpickrow:hover{background:var(--bg)}
+qa-drawer .dpickname{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;font-weight:600;color:var(--fg)}
+qa-drawer .dpickdesc{min-width:0;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+qa-drawer .dpickempty{padding:.4rem .5rem;font-size:.72rem;color:var(--muted)}
 qa-drawer .dcompose{display:flex;align-items:flex-end;gap:.5rem}
 qa-drawer .dcompose .dbox{flex:1}
 qa-drawer .dsend{flex:none;width:34px;height:34px;border-radius:8px;border:none;background:var(--accent);

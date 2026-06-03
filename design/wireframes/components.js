@@ -156,14 +156,25 @@ customElements.define('qa-drawer', class extends HTMLElement {
     const title = this.getAttribute('title') || '✦ Assistant';
     const ph = this.getAttribute('placeholder') || 'Message the assistant…';
     const pinned = this.hasAttribute('pinned');
+    // composer affordances (wireframe stand-ins; the React panel feeds real data):
+    // commands="name|desc, …" → the /Commands picker · context="label, …" → attached chips.
+    const cmds = (this.getAttribute('commands') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const ctx = (this.getAttribute('context') || '').split(',').map(s => s.trim()).filter(Boolean);
     this.innerHTML =
       `<div class="dresize" title="Drag to resize"></div>
        <div class="dhead"><span class="dtitle">${esc(title)}</span><span class="dhead-right">${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</span></div>
        <div class="dbody">${body}</div>
        <div class="dinput">
-         <div class="dctx"><button class="cchip" type="button">＋ Add context</button><button class="cchip" type="button">/ Commands</button></div>
+         <div class="dctx">${ctx.map(c => `<span class="ctxchip">${esc(c)}<span class="x" title="Remove">✕</span></span>`).join('')}<button class="cchip" data-ctx type="button">＋ Add context</button><button class="cchip" data-cmd type="button">/ Commands</button></div>
+         <div class="dpicker" hidden><div class="dpickhead">Commands</div>${cmds.map(c => { const [n, d] = c.split('|').map(s => s.trim()); return `<button class="dpickrow" type="button"><span class="dpickname">/${esc(n)}</span>${d ? `<span class="dpickdesc">${esc(d)}</span>` : ''}</button>`; }).join('') || '<div class="dpickempty">No commands available</div>'}</div>
+         <div class="dattach" hidden><button class="dpickrow" type="button"><span class="dpickname">Story or file…</span></button><button class="dpickrow" type="button"><span class="dpickname">Image…</span></button></div>
          <div class="dcompose"><div class="dbox">${esc(ph)}</div><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
+    // composer affordances: toggle the /Commands picker and the Add-context menu (one open at a time)
+    const picker = this.querySelector('.dpicker'), attach = this.querySelector('.dattach');
+    const cmdChip = this.querySelector('[data-cmd]'), ctxChip = this.querySelector('[data-ctx]');
+    if (cmdChip) cmdChip.onclick = () => { if (attach) attach.hidden = true; picker.hidden = !picker.hidden; };
+    if (ctxChip) ctxChip.onclick = () => { if (picker) picker.hidden = true; attach.hidden = !attach.hidden; };
     // Drag the left border to resize (clamped); width is the element's own style.
     const rez = this.querySelector('.dresize');
     const onMove = e => { this.style.width = Math.min(720, Math.max(300, this._startW + (this._startX - e.clientX))) + 'px'; };
