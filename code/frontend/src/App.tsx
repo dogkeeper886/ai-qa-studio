@@ -185,8 +185,11 @@ function RepoStories({ repo, onBack }: { repo: string; onBack: () => void }) {
  *  and wire the composer's textarea + send button. */
 function Assistant() {
   const ref = useRef<HTMLElement>(null);
-  const { items, status, sendPrompt, respondPermission } = useAgent();
+  const { items, status, commands, sendPrompt, respondPermission } = useAgent();
   const [body, setBody] = useState<HTMLElement | null>(null);
+  // Feed the agent's real available_commands into the drawer's /Commands picker;
+  // qa-drawer observes this attribute and re-renders the picker in place.
+  const commandsAttr = commands.map((c) => `${c.name}|${c.description ?? ""}`).join(", ");
   const sendRef = useRef(sendPrompt);
   sendRef.current = sendPrompt;
 
@@ -205,7 +208,7 @@ function Assistant() {
 
   return (
     <>
-      <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send"></qa-drawer>
+      <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send" commands={commandsAttr}></qa-drawer>
       {body && createPortal(<Thread items={items} status={status} respond={respondPermission} />, body)}
     </>
   );
