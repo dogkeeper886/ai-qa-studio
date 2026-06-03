@@ -38,11 +38,23 @@ export default function App() {
   const active = repo ? "stories" : "projects";
   const crumb = repo ? `${BRAND} / ${repo} / Stories` : `${BRAND} / Projects`;
 
+  // The sidebar nav links carry the wireframe's .html hrefs, which would do a
+  // full-page navigation in the app. Intercept them and drive React state
+  // instead: Projects → repo list. Inert items (no href) fall through.
+  function onNav(e: React.MouseEvent) {
+    const a = (e.target as HTMLElement).closest("a");
+    const href = a?.getAttribute("href");
+    if (!href) return;
+    e.preventDefault();
+    if (href.endsWith("projects.html")) setRepo(null);
+    // stories.html → already on the active repo's stories; stay put.
+  }
+
   // qa-sidebar/qa-topbar render once in connectedCallback and don't observe
   // attribute changes — so key them by their value to remount on navigation.
   return (
     <qa-app>
-      <qa-sidebar key={active} active={active} brand={BRAND}></qa-sidebar>
+      <qa-sidebar key={active} active={active} brand={BRAND} onClick={onNav}></qa-sidebar>
       <main>
         <qa-topbar key={crumb} crumb={crumb}></qa-topbar>
         <div className="qa-content">
