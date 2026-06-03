@@ -64,14 +64,18 @@ export async function listRepos(): Promise<RepoListing[]> {
   return out;
 }
 
-/** Resolve a repo's docs/stories dir, or null if the name is unsafe or unknown.
- *  Confirming against the live listing (not just the shape check) is what keeps
- *  a crafted name from escaping active/. */
+/** Resolve a repo's docs/stories dir, or null if the name is unsafe or missing.
+ *  The shape guard rejects slashes and the `.`/`..` traversal segments, so the
+ *  name can only address one entry under active/; a single stat then confirms it
+ *  exists — no need to list the whole workbench on every request. */
 async function storiesDirOf(repo: string): Promise<string | null> {
-  if (!REPO_NAME_RE.test(repo)) return null;
-  const repos = await listRepos();
-  if (!repos.some((r) => r.name === repo)) return null;
-  return resolve(activeDir, repo, "docs/stories");
+  if (!REPO_NAME_RE.test(repo) || repo === "." || repo === "..") return null;
+  const dir = resolve(activeDir, repo, "docs/stories");
+  try {
+    return (await stat(dir)).isDirectory() ? dir : null;
+  } catch {
+    return null; // repo or its docs/stories doesn't exist
+  }
 }
 
 // --- docs/stories: the markdown source of truth (per repo) ------------------
@@ -113,7 +117,7 @@ export async function listStories(storiesDir: string): Promise<StoryListing[]> {
       }
     }),
   );
-  out.sort((a, b) => a.id.localeCompare(b.id));
+  out.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })); // STORY-2 before STORY-10
   return out;
 }
 

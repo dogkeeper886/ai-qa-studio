@@ -50,11 +50,12 @@ export default function App() {
     // stories.html → already on the active repo's stories; stay put.
   }
 
-  // qa-sidebar/qa-topbar render once in connectedCallback and don't observe
-  // attribute changes — so key them by their value to remount on navigation.
+  // qa-sidebar observes `active` and re-renders its nav in place, so it keeps
+  // instance state (the collapse/expand choice) across navigation. qa-topbar is
+  // stateless, so we just remount it by keying on the crumb.
   return (
     <qa-app>
-      <qa-sidebar key={active} active={active} brand={BRAND} onClick={onNav}></qa-sidebar>
+      <qa-sidebar active={active} brand={BRAND} onClick={onNav}></qa-sidebar>
       <main>
         <qa-topbar key={crumb} crumb={crumb}></qa-topbar>
         <div className="qa-content">
@@ -130,10 +131,12 @@ function RepoStories({ repo, onBack }: { repo: string; onBack: () => void }) {
 
   async function openStory(s: Story): Promise<void> {
     try {
-      const src = await (await fetch(`/api/repos/${encodeURIComponent(repo)}/stories/${s.id}`)).text();
+      const res = await fetch(`/api/repos/${encodeURIComponent(repo)}/stories/${s.id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`); // else the 404 JSON body renders as the story
+      const src = await res.text();
       window.qaDoc?.open({ name: `${repo}/docs/stories/${s.file}`, rendered: markdown.render(src), source: src });
     } catch {
-      /* read view is hardened later; this proves the repo-scoped loop */
+      /* story/repo vanished between list and click, or hub down — leave the list as-is */
     }
   }
 
