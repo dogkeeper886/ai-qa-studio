@@ -47,4 +47,4 @@ The *how* — to be worked out on the issue (research / PoC / decisions):
 ## Status
 
 - Created: 2026-06-02
-- Issues: #12 (wireframe) → PR #14 open, #13 (build) — wireframe-first
+- Issues: #12 (wireframe) ✓ merged (#14), #13 (build) — wireframe-first
