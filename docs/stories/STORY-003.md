@@ -37,4 +37,5 @@ The *how* — worked out on the issues:
 ## Status
 
 - Created: 2026-06-02
-- Issues: #2 (foundation) → PR #15 open, #3 (UI skills) ✓ merged
+- **Completed: 2026-06-03** — the studio boots, the design framework renders, the hub serves the workspace + runs an agent session, and the UI design/review skills are in place.
+- Issues: #2 (foundation) ✓ merged (#15), #3 (UI skills) ✓ merged
