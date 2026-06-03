@@ -4,6 +4,14 @@
 # Local-only secrets / integration config — never commit
 config/
 
+# Local workbench content — the user's own repos live under active/ (in progress)
+# and completed/. They are local-only and must never be committed into the public
+# core. Keep the .gitkeep placeholders so the dirs stay tracked.
+active/*
+!active/.gitkeep
+completed/*
+!completed/.gitkeep
+
 # Local run-surface — commands/skills are linked (or copied) here on demand from
 # workflow/ (the committed source of truth). Never committed; nothing to keep in sync.
 .claude/commands/
