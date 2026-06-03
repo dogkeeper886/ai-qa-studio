@@ -27,9 +27,9 @@ const activeDir = resolve(repoRoot, "active");
 
 // --- active/<repo>: the workbench of repos ----------------------------------
 
-/** A repo name is a single path segment of safe chars — never a traversal. The
- *  listing pass is the real guard (we only serve names readdir returns); this
- *  shape check just rejects junk before we touch the filesystem. */
+/** A repo name is a single path segment of safe chars (no slashes). This — plus
+ *  storiesDirOf's explicit `.`/`..` rejection — is the path-scope guard: it keeps
+ *  a resolved name from addressing anything but one entry directly under active/. */
 const REPO_NAME_RE = /^[A-Za-z0-9._-]+$/;
 
 export interface RepoListing {
