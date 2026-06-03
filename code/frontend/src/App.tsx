@@ -5,7 +5,7 @@
 import "../../../design/wireframes/tokens.css";
 import "../../../design/wireframes/components.css";
 import "../../../design/wireframes/components.js"; // side effect: defines qa-* + window.qaDoc
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const BRAND = (import.meta.env.VITE_APP_NAME as string | undefined) ?? "AI QA Studio";
 const STORIES_GRID = { gridTemplateColumns: "7rem 1fr 6rem" } as const;
@@ -45,7 +45,7 @@ export default function App() {
     <qa-app>
       <qa-sidebar active="stories" brand={BRAND}></qa-sidebar>
       <main>
-        <qa-topbar crumb={`${BRAND} / Stories`} no-assistant=""></qa-topbar>
+        <qa-topbar crumb={`${BRAND} / Stories`}></qa-topbar>
         <div className="qa-content">
           <h1 className="pagehead">Stories</h1>
           <p className="pagesub">
@@ -77,9 +77,33 @@ export default function App() {
           )}
         </div>
       </main>
+      <Assistant />
       <qa-md-viewer></qa-md-viewer>
     </qa-app>
   );
+}
+
+/** The assistant drawer (the ✦ Assistant control opens it). qa-drawer is a
+ *  light-DOM custom element that rewrites its own innerHTML, which conflicts
+ *  with React children — so render it empty and fill its .dbody imperatively.
+ *  The live agent thread is the next build (#13); this is the shell. */
+function Assistant() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const dbody = ref.current?.querySelector(".dbody");
+    if (dbody && !dbody.childElementCount) {
+      dbody.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;
+             text-align:center;gap:.55rem;color:var(--muted);padding:1.5rem .5rem">
+          <div style="width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--bg);
+               display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)">✦</div>
+          <div style="font-size:.95rem;font-weight:700;color:var(--fg)">Start a session</div>
+          <div style="font-size:.78rem;line-height:1.55;max-width:17rem">Ask the agent to plan tests, trace a ticket, or draft
+            cases. The live thread renders here once the chat panel lands (#13) — this is its shell, wired to the hub.</div>
+        </div>`;
+    }
+  }, []);
+  return <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send"></qa-drawer>;
 }
 
 /** The framework's empty/loading/error cell (`.qa-empty`). */
