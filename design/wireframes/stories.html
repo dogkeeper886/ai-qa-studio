@@ -20,7 +20,7 @@
 <qa-app>
   <qa-sidebar active="stories"></qa-sidebar>
   <main>
-    <qa-topbar crumb="AI QA Studio / Stories" no-assistant></qa-topbar>
+    <qa-topbar crumb="AI QA Studio / Stories"></qa-topbar>
     <div class="qa-content">
       <h1 class="pagehead">Stories</h1>
       <p class="pagesub">The feature requests in this project, read straight from <code>docs/stories/</code> — the source of truth. Open one to read it without leaving the studio.</p>
@@ -98,6 +98,11 @@
    document.querySelectorAll('.trow[data-story]').forEach(row => {
      row.onclick = () => qaDoc.open(STORIES[row.getAttribute('data-story')]);
    });
+   // ✦ Assistant opens the assistant view (chat.html). Clone the button to drop
+   // the in-page toggle listener the topbar wired, then navigate — this screen
+   // shows the assistant as its own state rather than a drawer over the list.
+   const a = document.querySelector('qa-topbar [data-assistant]');
+   if (a) { const n = a.cloneNode(true); a.replaceWith(n); n.onclick = () => location.href = 'chat.html'; }
  });
 </script>
 </body>

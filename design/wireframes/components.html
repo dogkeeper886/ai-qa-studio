@@ -65,6 +65,33 @@
         <qa-btn variant="ghost" id="demoDoc">Open a sample .md →</qa-btn>
       </div>
 
+      <div class="sec"><h2>agent-thread components — qa-tool · qa-artifact · qa-turn</h2>
+        <p class="pagesub">The live agent thread, rendered from observed ACP <code>session/update</code> events. They live in the assistant drawer; shown here on the page for the full state range.</p>
+
+        <h3 style="font-size:.8rem;margin:.5rem 0 .35rem;color:var(--muted)">qa-tool — collapsible tool-call step (queued · executing · completed · failed)</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem;max-width:420px">
+          <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
+          <qa-tool kind="execute" status="executing" name="Terminal · <code>npm test</code>"></qa-tool>
+          <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
+<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
+          <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/00_overview.md</code>"></qa-tool>
+          <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">File has not been read yet. Read it first before writing.</span></qa-tool>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-artifact — produced artifact under review (the in-thread review gate)</h3>
+        <div style="max-width:420px">
+          <qa-artifact name="test_plan/00_overview.md" kind="plan" summary="Test plan overview — 4 sections, 12 scenarios drafted from the story.">## Test Plan — See the stories in the studio
+**Scope.** The studio reads docs/stories/*.md and renders each story…
+**Sections.** 1 Overview · 2 Scenarios · 3 Traceability · 4 Risks</qa-artifact>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-turn — a completed turn folded to a one-line summary</h3>
+        <div style="display:flex;flex-direction:column;gap:.4rem;max-width:420px">
+          <qa-turn outcome="end_turn" turns="5" cost="$0.31" denials="2"></qa-turn>
+          <qa-turn outcome="error" turns="1" cost="$0.04"></qa-turn>
+        </div>
+      </div>
+
       <div class="sec"><h2>shared CSS patterns (class-based, no custom element)</h2>
         <p class="pagesub">Plain class selectors keyed by their historic names so screens use them without markup changes. Add a new pattern here only when 2+ screens already share the markup.</p>
 
@@ -74,6 +101,18 @@
           <span class="badge fail">FAIL</span>
           <span class="badge blocked">BLOCKED</span>
           <span class="badge muted">In review</span>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.decision — the agent's "waiting on a human" panel (AskUserQuestion / canUseTool gate)</h3>
+        <p class="pagesub" style="margin:0 0 .5rem">Option buttons with a label + description — maps an ACP <code>session/request_permission</code> straight to the UI. Docks in the drawer, just above the composer.</p>
+        <div class="decision" style="max-width:420px;border:1px solid var(--border);border-radius:10px">
+          <div class="decision-label">Permission · canUseTool</div>
+          <div class="decision-question">Allow the agent to run <code>Write test_plan/00_overview.md</code>?</div>
+          <div class="decision-options">
+            <button class="decision-opt"><span class="opt-label">Always allow</span><span class="opt-desc">Approve Write for the rest of this session</span></button>
+            <button class="decision-opt"><span class="opt-label">Allow once</span><span class="opt-desc">Just this one call</span></button>
+            <button class="decision-opt"><span class="opt-label">Reject</span><span class="opt-desc">Deny, and tell the agent why</span></button>
+          </div>
         </div>
 
         <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.stat — number + label tile (used by dashboard headers)</h3>

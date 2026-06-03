@@ -4,6 +4,7 @@
 
    Catalog: <qa-app> <qa-sidebar> <qa-topbar> <qa-rail> <qa-drawer> <qa-field>
             <qa-btn> <qa-toggle> <qa-gate-card> <qa-decision> <qa-md-viewer>
+            <qa-tool> <qa-artifact> <qa-turn>
    Convention: config via attributes; projected content (drawer body) is the
    element's existing innerHTML, captured then re-wrapped. Render-once on connect
    (wireframes don't mutate attributes live).
@@ -138,7 +139,10 @@ customElements.define('qa-drawer', class extends HTMLElement {
     this.innerHTML =
       `<div class="dhead"><span>${esc(title)}</span>${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</div>
        <div class="dbody">${body}</div>
-       <div class="dinput"><div class="dbox">${esc(ph)}</div></div>`;
+       <div class="dinput">
+         <div class="dctx"><button class="cchip" type="button">＋ Add context</button><button class="cchip" type="button">/ Commands</button></div>
+         <div class="dcompose"><div class="dbox">${esc(ph)}</div><button class="dsend" type="button" title="Send">↑</button></div>
+       </div>`;
     if (pinned) { document.body.classList.add('assistant-pinned'); return; }  // always-on: no close/responsive; topbar toggle hidden
     this.querySelector('.dclose').onclick = () => toggleAssistant();
     // default depends on viewport (and the `closed` attr); a manual toggle pins it
@@ -261,6 +265,76 @@ customElements.define('qa-md-viewer', class extends HTMLElement {
       },
       close: () => back.classList.remove('open')
     };
+  }
+});
+
+/* ---- qa-tool: a tool-call step in the agent thread — collapsible + inspectable.
+       name=title (may contain <code>) · kind=execute|edit|read|search|skill|mcp (glyph)
+       status=queued|executing|completed|failed (badge) · `open` starts expanded.
+       Projected innerHTML is the input/result detail, shown when expanded. ---- */
+customElements.define('qa-tool', class extends HTMLElement {
+  connectedCallback() {
+    const detail = this.innerHTML.trim();
+    const name = this.getAttribute('name') || 'Tool';      // trusted wireframe markup (may include <code>)
+    const kind = (this.getAttribute('kind') || 'execute').toLowerCase();
+    const status = (this.getAttribute('status') || 'completed').toLowerCase();
+    if (this.hasAttribute('open')) this.classList.add('open');
+    const GLYPH = { execute:'⟩', edit:'✎', read:'◇', search:'⌕', skill:'✦', mcp:'⊞' };
+    const BADGE = { queued:['muted','Queued'], executing:['blocked','Running'], completed:['pass','Done'], failed:['fail','Failed'] };
+    const [bcls, blabel] = BADGE[status] || BADGE.completed;
+    this.innerHTML =
+      `<button class="toolhead" type="button">
+         <span class="tk">${GLYPH[kind] || GLYPH.execute}</span>
+         <span class="tname">${name}</span>
+         <span class="badge ${bcls}">${esc(blabel)}</span>
+         ${detail ? '<span class="tchev">▸</span>' : ''}
+       </button>
+       ${detail ? `<div class="tbody">${detail}</div>` : ''}`;
+    const head = this.querySelector('.toolhead');
+    if (detail) head.onclick = () => this.classList.toggle('open');
+  }
+});
+
+/* ---- qa-artifact: a produced artifact under review in the thread (the review gate).
+       name=file path · kind=plan|cases|file|email (tag) · summary=one line.
+       Projected innerHTML is an optional clamped content peek. Wire "Open & review"
+       in the screen: el.querySelector('.aacts qa-btn button').onclick = () => qaDoc.open({…}). ---- */
+customElements.define('qa-artifact', class extends HTMLElement {
+  connectedCallback() {
+    const peek = this.innerHTML.trim();   // trusted wireframe markup
+    const name = this.getAttribute('name') || 'artifact.md';
+    const kind = this.getAttribute('kind') || 'file';
+    const summary = this.getAttribute('summary') || '';
+    this.innerHTML =
+      `<div class="ahead"><span class="aicon">▤</span><span class="afile">${esc(name)}</span><span class="badge muted">${esc(kind)}</span></div>
+       ${summary ? `<div class="asum">${esc(summary)}</div>` : ''}
+       ${peek ? `<div class="apeek">${peek}</div>` : ''}
+       <div class="aacts"><qa-btn variant="sm-primary">Open &amp; review</qa-btn><qa-btn variant="sm">Approve</qa-btn><qa-btn variant="sm">Send back</qa-btn></div>`;
+  }
+});
+
+/* ---- qa-turn: a completed turn folded to a one-line summary in the thread.
+       outcome=end_turn|refusal|error|cancelled · turns · cost · denials ---- */
+customElements.define('qa-turn', class extends HTMLElement {
+  connectedCallback() {
+    const outcome = (this.getAttribute('outcome') || 'end_turn').toLowerCase();
+    const OUT = { end_turn:['ok','✓','Turn complete'], refusal:['bad','!','Refused'],
+                  error:['bad','!','Turn errored'], cancelled:['mut','■','Cancelled'] };
+    const [cls, glyph, label] = OUT[outcome] || OUT.end_turn;
+    const denials = this.getAttribute('denials');
+    const meta = [
+      this.getAttribute('turns') ? `${esc(this.getAttribute('turns'))} turns` : '',
+      this.getAttribute('cost') ? esc(this.getAttribute('cost')) : '',
+      (denials && denials !== '0') ? `${esc(denials)} denied` : ''
+    ].filter(Boolean).join(' · ');
+    this.innerHTML =
+      `<button class="tsbar" type="button">
+         <span class="tsdot ${cls}">${glyph}</span>
+         <span class="tslabel">${esc(label)}</span>
+         <span class="tsmeta">${meta}</span>
+         <span class="tschev">▸</span>
+       </button>`;
+    this.querySelector('.tsbar').onclick = () => this.classList.toggle('open');
   }
 });
 

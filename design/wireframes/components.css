@@ -290,3 +290,67 @@ qa-md-viewer .mdsrc{display:none;white-space:pre-wrap;font-family:ui-monospace,M
    coexist (one applies per build). */
 qa-md-viewer .mdwin.src .md, qa-md-viewer .md-viewer.src .md{display:none}
 qa-md-viewer .mdwin.src .mdsrc, qa-md-viewer .md-viewer.src .mdsrc{display:block}
+
+/* ---- drawer composer (richer dinput): context affordances + send ---- */
+qa-drawer .dctx{display:flex;gap:.4rem;margin-bottom:.5rem}
+qa-drawer .cchip{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:.2rem .6rem;
+  font-size:.6875rem;font-weight:600;color:var(--muted);cursor:pointer}
+qa-drawer .cchip:hover{color:var(--fg);border-color:var(--accent)}
+qa-drawer .dcompose{display:flex;align-items:flex-end;gap:.5rem}
+qa-drawer .dcompose .dbox{flex:1}
+qa-drawer .dsend{flex:none;width:34px;height:34px;border-radius:8px;border:none;background:var(--accent);
+  color:var(--on-accent);font-size:.95rem;line-height:1;cursor:pointer;box-shadow:var(--shadow-sm)}
+
+/* ---- qa-caret: the streaming/typing indicator on a live agent message ---- */
+.qa-caret{display:inline-block;width:.45rem;height:1em;vertical-align:text-bottom;margin-left:2px;
+  background:var(--accent);animation:qa-blink 1s step-end infinite}
+@keyframes qa-blink{50%{opacity:0}}
+
+/* ---- qa-tool: collapsible, inspectable tool-call step (agent thread) ---- */
+qa-tool{display:block;border:1px solid var(--border);border-radius:10px;background:var(--bg);overflow:hidden}
+qa-tool .toolhead{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;background:transparent;
+  border:none;cursor:default;padding:.5rem .625rem;font:inherit;color:var(--fg)}
+qa-tool:has(.tbody) .toolhead{cursor:pointer}
+qa-tool .tk{flex:none;width:20px;height:20px;border-radius:6px;border:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--muted);
+  font-family:ui-monospace,Menlo,monospace}
+qa-tool .tname{flex:1;min-width:0;font-size:.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+qa-tool .tname code{font-family:ui-monospace,Menlo,monospace;font-weight:500;font-size:.72rem}
+qa-tool .tchev{flex:none;color:var(--muted);font-size:.7rem;transition:transform .12s ease}
+qa-tool.open .tchev{transform:rotate(90deg)}
+qa-tool .tbody{display:none;border-top:1px solid var(--border);padding:.55rem .7rem;background:var(--surface);
+  font-family:ui-monospace,Menlo,monospace;font-size:.72rem;line-height:1.55;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+qa-tool.open .tbody{display:block}
+qa-tool .tbody .out{color:var(--fg)}        /* result line, brighter than the echoed input */
+qa-tool .tbody .err{color:var(--danger)}    /* tool error text */
+qa-tool .badge.blocked{animation:qa-pulse 1.4s ease-in-out infinite}  /* Running pulses */
+@keyframes qa-pulse{50%{opacity:.5}}
+
+/* ---- qa-artifact: produced artifact under review (the in-thread review gate) ---- */
+qa-artifact{display:block;border:1px solid var(--border);border-radius:10px;background:var(--surface);
+  box-shadow:var(--shadow-sm);padding:.7rem .75rem}
+qa-artifact .ahead{display:flex;align-items:center;gap:.45rem}
+qa-artifact .aicon{flex:none;color:var(--muted);font-size:.85rem}
+qa-artifact .afile{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:.75rem;font-weight:700;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+qa-artifact .asum{font-size:.75rem;color:var(--muted);margin-top:.3rem;line-height:1.45}
+qa-artifact .apeek{position:relative;margin-top:.5rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);
+  box-shadow:var(--inset);padding:.55rem .65rem;font-size:.72rem;line-height:1.5;color:var(--muted);max-height:5.4rem;overflow:hidden}
+qa-artifact .apeek::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6rem;
+  background:linear-gradient(transparent,var(--bg))}   /* fade the clamp — content continues */
+qa-artifact .aacts{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.65rem}
+
+/* ---- qa-turn: a completed turn folded to a one-line summary (agent thread) ---- */
+qa-turn{display:block}
+qa-turn .tsbar{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;cursor:pointer;font:inherit;
+  background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:.4rem .75rem;color:var(--muted)}
+qa-turn .tsbar:hover{color:var(--fg);border-color:var(--accent)}
+qa-turn .tsdot{flex:none;width:16px;height:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:800;color:var(--on-status)}
+qa-turn .tsdot.ok{background:var(--success)}
+qa-turn .tsdot.bad{background:var(--danger)}
+qa-turn .tsdot.mut{background:var(--border);color:var(--muted)}
+qa-turn .tslabel{flex:none;font-size:.72rem;font-weight:700;color:var(--fg)}
+qa-turn .tsmeta{flex:1;min-width:0;font-size:.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+qa-turn .tschev{flex:none;font-size:.7rem;transition:transform .12s ease}
+qa-turn.open .tschev{transform:rotate(90deg)}

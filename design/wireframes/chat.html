@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI QA Studio — Assistant</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="components.js"></script>
+<style>
+ /* screen-local only — one-off chat content; everything shared comes from components.css.
+    Tokens only, never literal colours/sizes. */
+ .stories-grid{grid-template-columns:7rem 1fr 6rem}
+ .trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+ .trow .read{justify-self:end;color:var(--muted);font-size:.75rem}
+ /* empty-session state (no thread yet) — centred welcome + suggested prompts */
+ #thread-empty:not([hidden]){flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+   text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
+ #thread-empty .ce-glyph{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);
+   background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)}
+ #thread-empty .ce-title{font-size:.95rem;font-weight:700;color:var(--fg)}
+ #thread-empty .ce-sub{font-size:.78rem;line-height:1.55;max-width:18rem}
+ #thread-empty .ce-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;width:100%;align-items:stretch}
+ #thread-empty .ce-suggest .cchip{text-align:left}
+ /* a streamed agent line carries the live caret; thought line reuses .act */
+</style>
+</head>
+<body class="theme-light">
+<qa-app>
+  <qa-sidebar active="stories"></qa-sidebar>
+  <main>
+    <qa-topbar crumb="AI QA Studio / Stories|stories.html / Assistant"></qa-topbar>
+    <div class="qa-content">
+      <h1 class="pagehead">Stories</h1>
+      <p class="pagesub">The feature requests in this project, read from <code>docs/stories/</code>. The assistant is open on the right — drive the work and watch it live without leaving the page.</p>
+      <div class="table">
+        <div class="thead stories-grid"><div>ID</div><div>Title</div><div></div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-001</div><div>See the project's stories in the studio</div><div class="read">Read →</div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-002</div><div>Talk to the AI agent in the studio</div><div class="read">Read →</div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-003</div><div>Stand up the studio foundation</div><div class="read">Read →</div></div>
+      </div>
+    </div>
+  </main>
+
+  <qa-drawer pinned title="✦ Assistant" placeholder="Message the agent — ⏎ to send">
+    <!-- EMPTY state (shown with ?state=empty): a fresh session, no thread yet -->
+    <div id="thread-empty" hidden>
+      <div class="ce-glyph">✦</div>
+      <div class="ce-title">Start a session</div>
+      <div class="ce-sub">Ask the agent to trace a ticket, plan tests, or draft cases. You'll see every step, approve what it runs, and review what it produces — right here.</div>
+      <div class="ce-suggest">
+        <button class="cchip" type="button">Plan tests for STORY-001</button>
+        <button class="cchip" type="button">Trace a ticket into a workspace</button>
+        <button class="cchip" type="button">Draft test cases from a plan</button>
+      </div>
+    </div>
+
+    <!-- ACTIVE state (default): a session mid-turn, paused on a permission -->
+    <div id="thread-active">
+      <div class="qa-banner qa-banner-warn"><span class="qa-banner-icon">⚠</span>
+        <span class="qa-banner-text">Approaching the weekly usage limit (78%). Long runs may pause.</span></div>
+
+      <qa-turn outcome="end_turn" turns="3" cost="$0.12" denials="0"></qa-turn>
+
+      <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
+      <div class="act">▸ loaded planning-tests · read the story · detected Type B (feature)</div>
+
+      <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
+      <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
+<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
+      <qa-tool kind="read" status="completed" name="Read · <code>docs/stories/STORY-001.md</code>"></qa-tool>
+
+      <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">⚠ File has not been read yet. Read it first before writing.</span></qa-tool>
+      <div class="act">▸ re-reading the file, then writing it</div>
+
+      <qa-artifact name="test_plan/00_overview.md" kind="plan"
+        summary="Drafted from STORY-001 — 4 sections, 12 scenarios. Review before the agent writes the section files.">## Test Plan — See the stories in the studio
+**Scope.** The studio reads docs/stories/*.md and renders each story by ID + title…
+**Sections.** 1 Overview · 2 Scenarios · 3 Traceability · 4 Risks</qa-artifact>
+
+      <div class="msg bot">Plan looks good — adding the scenario sections and a traceabili<span class="qa-caret"></span></div>
+
+      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open>+ # TS-01 · Render the stories list
++ Given docs/stories has 3 story files
++ When the studio opens
+<span class="out">+ Then all 3 appear by ID and title</span></qa-tool>
+
+      <div class="decision">
+        <div class="decision-label">Permission · canUseTool</div>
+        <div class="decision-question">Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?</div>
+        <div class="decision-options">
+          <button class="decision-opt" type="button"><span class="opt-label">Always allow</span><span class="opt-desc">Approve Write for the rest of this session</span></button>
+          <button class="decision-opt" type="button"><span class="opt-label">Allow once</span><span class="opt-desc">Just this one call</span></button>
+          <button class="decision-opt" type="button"><span class="opt-label">Reject</span><span class="opt-desc">Deny, and tell the agent why</span></button>
+        </div>
+      </div>
+    </div>
+  </qa-drawer>
+
+  <qa-md-viewer></qa-md-viewer>
+</qa-app>
+<script>
+ // Wireframe wiring. The real panel renders this thread from the hub's ACP
+ // session/update stream; here we just demonstrate the states + the doc preview.
+ const PLAN = {
+   name: 'test_plan/00_overview.md',
+   rendered: `<h1>Test Plan — See the stories in the studio</h1>
+     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title, readable without leaving the GUI.</p>
+     <h2>Sections</h2>
+     <ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability matrix</li><li>4 — Risk register</li></ul>`,
+   source: '# Test Plan — See the stories in the studio\n\n**Scope.** The studio reads `docs/stories/*.md` …\n\n## Sections\n1. Overview & scope\n2. Scenarios (TS-01…TS-12)\n3. Traceability matrix\n4. Risk register\n'
+ };
+ document.addEventListener('DOMContentLoaded', () => {
+   // Wire the artifact's "Open & review" button to the doc viewer.
+   const openBtn = document.querySelector('qa-artifact .aacts qa-btn button');
+   if (openBtn) openBtn.onclick = () => qaDoc.open(PLAN);
+   // ?state=empty shows the fresh-session state instead of the active thread.
+   if (new URLSearchParams(location.search).get('state') === 'empty') {
+     document.getElementById('thread-active').hidden = true;
+     document.getElementById('thread-empty').hidden = false;
+   }
+ });
+</script>
+</body>
+</html>
