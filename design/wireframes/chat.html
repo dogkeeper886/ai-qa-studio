@@ -7,21 +7,22 @@
 <link rel="stylesheet" href="components.css">
 <script defer src="components.js"></script>
 <style>
- /* screen-local only — one-off chat content; everything shared comes from components.css.
-    Tokens only, never literal colours/sizes. */
+ /* screen-local only — one-off chat content; everything shared comes from components.css. Tokens only. */
  .stories-grid{grid-template-columns:7rem 1fr 6rem}
  .trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}
  .trow .read{justify-self:end;color:var(--muted);font-size:.75rem}
- /* empty-session state (no thread yet) — centred welcome + suggested prompts */
+ /* an "open this file" link inside a tool result */
+ .openfile{display:inline-block;margin-top:.35rem;color:var(--accent);text-decoration:underline;cursor:pointer;
+   font-family:inherit;font-size:.72rem}
+ /* empty-session state (no thread yet) */
  #thread-empty:not([hidden]){flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
    text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
- #thread-empty .ce-glyph{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);
-   background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)}
+ #thread-empty .ce-glyph{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--bg);
+   display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)}
  #thread-empty .ce-title{font-size:.95rem;font-weight:700;color:var(--fg)}
  #thread-empty .ce-sub{font-size:.78rem;line-height:1.55;max-width:18rem}
- #thread-empty .ce-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;width:100%;align-items:stretch}
+ #thread-empty .ce-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;width:100%}
  #thread-empty .ce-suggest .cchip{text-align:left}
- /* a streamed agent line carries the live caret; thought line reuses .act */
 </style>
 </head>
 <body class="theme-light">
@@ -31,7 +32,7 @@
     <qa-topbar crumb="AI QA Studio / Stories|stories.html / Assistant"></qa-topbar>
     <div class="qa-content">
       <h1 class="pagehead">Stories</h1>
-      <p class="pagesub">The feature requests in this project, read from <code>docs/stories/</code>. The assistant is open on the right — drive the work and watch it live without leaving the page.</p>
+      <p class="pagesub">The feature requests in this project, read from <code>docs/stories/</code>. The assistant is open on the right — drag its left edge to resize, or close it with ✕.</p>
       <div class="table">
         <div class="thead stories-grid"><div>ID</div><div>Title</div><div></div></div>
         <div class="trow stories-grid"><div class="sid">STORY-001</div><div>See the project's stories in the studio</div><div class="read">Read →</div></div>
@@ -41,8 +42,8 @@
     </div>
   </main>
 
-  <qa-drawer pinned title="✦ Assistant" placeholder="Message the agent — ⏎ to send">
-    <!-- EMPTY state (shown with ?state=empty): a fresh session, no thread yet -->
+  <qa-drawer title="✦ Assistant" placeholder="Message the agent — ⏎ to send" style="width:440px">
+    <!-- EMPTY: a fresh session (?state=empty) -->
     <div id="thread-empty" hidden>
       <div class="ce-glyph">✦</div>
       <div class="ce-title">Start a session</div>
@@ -54,45 +55,51 @@
       </div>
     </div>
 
-    <!-- ACTIVE state (default): a session mid-turn, paused on a permission -->
-    <div id="thread-active">
-      <div class="qa-banner qa-banner-warn"><span class="qa-banner-icon">⚠</span>
-        <span class="qa-banner-text">Approaching the weekly usage limit (78%). Long runs may pause.</span></div>
+    <!-- RAW: the verbatim session/update frames (the POC wire view) — toggled by ⟨⟩ Raw -->
+    <div id="thread-raw" hidden>
+      <div class="qa-wire">
+        <div class="wf out">→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}</div>
+        <div class="wf in">← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"agentInfo":{"name":"claude-code-acp"}}}</div>
+        <div class="wf out">→ {"jsonrpc":"2.0","id":3,"method":"session/prompt","params":{"prompt":[{"type":"text","text":"Plan tests for STORY-001 …"}]}}</div>
+        <div class="wf in">← {"method":"session/update","params":{"update":{"sessionUpdate":"tool_call","toolCallId":"toolu_01","title":"ls docs/stories","kind":"execute","status":"completed"}}}</div>
+        <div class="wf in">← {"method":"session/update","params":{"update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Drafted the plan overview."}}}}</div>
+        <div class="wf in">← {"id":0,"method":"session/request_permission","params":{"toolCall":{"title":"Write test_plan/sections/TS-01.md"},"options":[{"optionId":"allow","name":"Allow"}]}}</div>
+      </div>
+    </div>
 
-      <qa-turn outcome="end_turn" turns="3" cost="$0.12" denials="0"></qa-turn>
+    <!-- ACTIVE (default): a session mid-turn, paused on a permission -->
+    <div id="thread-active">
+      <qa-turn outcome="end_turn" turns="3" cost="$0.12"></qa-turn>
 
       <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
-      <div class="act">▸ loaded planning-tests · read the story · detected Type B (feature)</div>
+      <div class="act">▸ loaded planning-tests · detected Type B (feature)</div>
+
+      <qa-plan>
+        <div data-s="done">Read the story &amp; baseline</div>
+        <div data-s="doing">Draft the test-plan overview</div>
+        <div data-s="todo">Write the scenario sections (TS-01…)</div>
+        <div data-s="todo">Build the traceability matrix</div>
+      </qa-plan>
 
       <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
       <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
 <span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
-      <qa-tool kind="read" status="completed" name="Read · <code>docs/stories/STORY-001.md</code>"></qa-tool>
-
       <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">⚠ File has not been read yet. Read it first before writing.</span></qa-tool>
-      <div class="act">▸ re-reading the file, then writing it</div>
+      <qa-tool kind="edit" status="completed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="add">+ # Test Plan — See the stories in the studio</span>
+<span class="add">+ Scope · Scenarios (TS-01…12) · Traceability · Risks</span>
+<a class="openfile" data-open="plan">⤢ Open test_plan/00_overview.md</a></qa-tool>
 
-      <qa-artifact name="test_plan/00_overview.md" kind="plan"
-        summary="Drafted from STORY-001 — 4 sections, 12 scenarios. Review before the agent writes the section files.">## Test Plan — See the stories in the studio
-**Scope.** The studio reads docs/stories/*.md and renders each story by ID + title…
-**Sections.** 1 Overview · 2 Scenarios · 3 Traceability · 4 Risks</qa-artifact>
+      <qa-ask label="Review · the plan" answered="Approved — continue"
+        q="Approve <code>test_plan/00_overview.md</code> so the agent can write the section files?"></qa-ask>
 
-      <div class="msg bot">Plan looks good — adding the scenario sections and a traceabili<span class="qa-caret"></span></div>
+      <div class="msg bot">On it — writing the first scenario section now<span class="qa-caret"></span></div>
 
-      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open>+ # TS-01 · Render the stories list
-+ Given docs/stories has 3 story files
-+ When the studio opens
-<span class="out">+ Then all 3 appear by ID and title</span></qa-tool>
+      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open><span class="add">+ # TS-01 · Render the stories list</span>
+<span class="add">+ Given docs/stories has 3 files · When the studio opens · Then all 3 appear</span></qa-tool>
 
-      <div class="decision">
-        <div class="decision-label">Permission · canUseTool</div>
-        <div class="decision-question">Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?</div>
-        <div class="decision-options">
-          <button class="decision-opt" type="button"><span class="opt-label">Always allow</span><span class="opt-desc">Approve Write for the rest of this session</span></button>
-          <button class="decision-opt" type="button"><span class="opt-label">Allow once</span><span class="opt-desc">Just this one call</span></button>
-          <button class="decision-opt" type="button"><span class="opt-label">Reject</span><span class="opt-desc">Deny, and tell the agent why</span></button>
-        </div>
-      </div>
+      <qa-ask label="Permission · canUseTool"
+        q="Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?"
+        options="Always allow|Approve Write for the rest of this session, Allow once|Just this one call, Reject|Deny and tell the agent why"></qa-ask>
     </div>
   </qa-drawer>
 
@@ -100,23 +107,38 @@
 </qa-app>
 <script>
  // Wireframe wiring. The real panel renders this thread from the hub's ACP
- // session/update stream; here we just demonstrate the states + the doc preview.
+ // session/update stream; here we demonstrate the states + the raw view + a preview.
  const PLAN = {
    name: 'test_plan/00_overview.md',
    rendered: `<h1>Test Plan — See the stories in the studio</h1>
-     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title, readable without leaving the GUI.</p>
-     <h2>Sections</h2>
-     <ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability matrix</li><li>4 — Risk register</li></ul>`,
-   source: '# Test Plan — See the stories in the studio\n\n**Scope.** The studio reads `docs/stories/*.md` …\n\n## Sections\n1. Overview & scope\n2. Scenarios (TS-01…TS-12)\n3. Traceability matrix\n4. Risk register\n'
+     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title.</p>
+     <h2>Sections</h2><ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability</li><li>4 — Risks</li></ul>`,
+   source: '# Test Plan — See the stories in the studio\n\n**Scope.** Reads `docs/stories/*.md` …\n\n## Sections\n1. Overview\n2. Scenarios (TS-01…TS-12)\n3. Traceability\n4. Risks\n'
  };
  document.addEventListener('DOMContentLoaded', () => {
-   // Wire the artifact's "Open & review" button to the doc viewer.
-   const openBtn = document.querySelector('qa-artifact .aacts qa-btn button');
-   if (openBtn) openBtn.onclick = () => qaDoc.open(PLAN);
-   // ?state=empty shows the fresh-session state instead of the active thread.
+   // Open a produced file in the doc viewer.
+   document.querySelectorAll('.openfile[data-open="plan"]').forEach(a => a.onclick = () => qaDoc.open(PLAN));
+
+   // ?state=empty → the fresh-session state.
    if (new URLSearchParams(location.search).get('state') === 'empty') {
      document.getElementById('thread-active').hidden = true;
      document.getElementById('thread-empty').hidden = false;
+   }
+
+   // Add a "⟨⟩ Raw" toggle to the drawer header → swaps thread ⇆ raw frames.
+   const right = document.querySelector('qa-drawer .dhead-right');
+   if (right) {
+     const btn = document.createElement('button');
+     btn.className = 'qa-iconbtn'; btn.type = 'button'; btn.textContent = '⟨⟩ Raw';
+     btn.title = 'Show the raw session/update frames';
+     const setRaw = raw => {
+       btn.classList.toggle('on', raw);
+       document.getElementById('thread-active').hidden = raw;
+       document.getElementById('thread-raw').hidden = !raw;
+     };
+     btn.onclick = () => setRaw(!btn.classList.contains('on'));
+     if (new URLSearchParams(location.search).get('raw') !== null) setRaw(true);  // ?raw deep-link
+     right.prepend(btn);
    }
  });
 </script>

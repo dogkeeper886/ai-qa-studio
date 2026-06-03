@@ -4,7 +4,7 @@
 
    Catalog: <qa-app> <qa-sidebar> <qa-topbar> <qa-rail> <qa-drawer> <qa-field>
             <qa-btn> <qa-toggle> <qa-gate-card> <qa-decision> <qa-md-viewer>
-            <qa-tool> <qa-artifact> <qa-turn>
+            <qa-tool> <qa-plan> <qa-turn> <qa-ask>  (agent thread, event-keyed)
    Convention: config via attributes; projected content (drawer body) is the
    element's existing innerHTML, captured then re-wrapped. Render-once on connect
    (wireframes don't mutate attributes live).
@@ -137,12 +137,21 @@ customElements.define('qa-drawer', class extends HTMLElement {
     const ph = this.getAttribute('placeholder') || 'Message the assistant…';
     const pinned = this.hasAttribute('pinned');
     this.innerHTML =
-      `<div class="dhead"><span>${esc(title)}</span>${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</div>
+      `<div class="dresize" title="Drag to resize"></div>
+       <div class="dhead"><span class="dtitle">${esc(title)}</span><span class="dhead-right">${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</span></div>
        <div class="dbody">${body}</div>
        <div class="dinput">
          <div class="dctx"><button class="cchip" type="button">＋ Add context</button><button class="cchip" type="button">/ Commands</button></div>
          <div class="dcompose"><div class="dbox">${esc(ph)}</div><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
+    // Drag the left border to resize (clamped); width is the element's own style.
+    const rez = this.querySelector('.dresize');
+    const onMove = e => { this.style.width = Math.min(720, Math.max(300, this._startW + (this._startX - e.clientX))) + 'px'; };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.body.style.userSelect = ''; };
+    rez.addEventListener('mousedown', e => {
+      this._startX = e.clientX; this._startW = this.offsetWidth; document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); e.preventDefault();
+    });
     if (pinned) { document.body.classList.add('assistant-pinned'); return; }  // always-on: no close/responsive; topbar toggle hidden
     this.querySelector('.dclose').onclick = () => toggleAssistant();
     // default depends on viewport (and the `closed` attr); a manual toggle pins it
@@ -268,10 +277,21 @@ customElements.define('qa-md-viewer', class extends HTMLElement {
   }
 });
 
-/* ---- qa-tool: a tool-call step in the agent thread — collapsible + inspectable.
-       name=title (may contain <code>) · kind=execute|edit|read|search|skill|mcp (glyph)
-       status=queued|executing|completed|failed (badge) · `open` starts expanded.
-       Projected innerHTML is the input/result detail, shown when expanded. ---- */
+/* ---- THE AGENT THREAD — a small, uniform set keyed to ACP session/update events
+        (one per event type, à la Zed/Cursor), not a zoo of bespoke cards:
+          message  → .msg.user / .msg.bot (+ .qa-caret while streaming)
+          thinking → .act
+          tool     → qa-tool   (one row for every tool)
+          plan     → qa-plan
+          turn end → qa-turn   (a quiet boundary line)
+          asks     → qa-ask    (permission / question / approve — one box)
+        These are deliberately flatter than the dashboard cards: the thread should
+        read as one conversation, not stacked widgets. ---- */
+
+/* ---- qa-tool: ONE generic tool-call row for every tool. Flat by default; the
+        body (input / result / diff) is inset and shown on expand.
+        name=title (may contain <code>) · kind=execute|edit|read|search|skill|mcp
+        status=queued|executing|completed|failed · `open` starts expanded. ---- */
 customElements.define('qa-tool', class extends HTMLElement {
   connectedCallback() {
     const detail = this.innerHTML.trim();
@@ -280,14 +300,14 @@ customElements.define('qa-tool', class extends HTMLElement {
     const status = (this.getAttribute('status') || 'completed').toLowerCase();
     if (this.hasAttribute('open')) this.classList.add('open');
     const GLYPH = { execute:'⟩', edit:'✎', read:'◇', search:'⌕', skill:'✦', mcp:'⊞' };
-    const BADGE = { queued:['muted','Queued'], executing:['blocked','Running'], completed:['pass','Done'], failed:['fail','Failed'] };
-    const [bcls, blabel] = BADGE[status] || BADGE.completed;
+    const STATUS = { queued:['q','Queued'], executing:['x','Running'], completed:['ok','Done'], failed:['bad','Failed'] };
+    const [scls, slabel] = STATUS[status] || STATUS.completed;
     this.innerHTML =
       `<button class="toolhead" type="button">
          <span class="tk">${GLYPH[kind] || GLYPH.execute}</span>
          <span class="tname">${name}</span>
-         <span class="badge ${bcls}">${esc(blabel)}</span>
-         ${detail ? '<span class="tchev">▸</span>' : ''}
+         <span class="tstatus s-${scls}">${esc(slabel)}</span>
+         ${detail ? '<span class="tchev">›</span>' : ''}
        </button>
        ${detail ? `<div class="tbody">${detail}</div>` : ''}`;
     const head = this.querySelector('.toolhead');
@@ -295,46 +315,58 @@ customElements.define('qa-tool', class extends HTMLElement {
   }
 });
 
-/* ---- qa-artifact: a produced artifact under review in the thread (the review gate).
-       name=file path · kind=plan|cases|file|email (tag) · summary=one line.
-       Projected innerHTML is an optional clamped content peek. Wire "Open & review"
-       in the screen: el.querySelector('.aacts qa-btn button').onclick = () => qaDoc.open({…}). ---- */
-customElements.define('qa-artifact', class extends HTMLElement {
+/* ---- qa-plan: the agent's task list (ACP `plan`). Children are entries; each
+        child's data-s = done|doing|todo sets the marker. ---- */
+customElements.define('qa-plan', class extends HTMLElement {
   connectedCallback() {
-    const peek = this.innerHTML.trim();   // trusted wireframe markup
-    const name = this.getAttribute('name') || 'artifact.md';
-    const kind = this.getAttribute('kind') || 'file';
-    const summary = this.getAttribute('summary') || '';
+    const rows = [...this.children].map(c => ({ s: c.getAttribute('data-s') || 'todo', t: c.innerHTML }));
     this.innerHTML =
-      `<div class="ahead"><span class="aicon">▤</span><span class="afile">${esc(name)}</span><span class="badge muted">${esc(kind)}</span></div>
-       ${summary ? `<div class="asum">${esc(summary)}</div>` : ''}
-       ${peek ? `<div class="apeek">${peek}</div>` : ''}
-       <div class="aacts"><qa-btn variant="sm-primary">Open &amp; review</qa-btn><qa-btn variant="sm">Approve</qa-btn><qa-btn variant="sm">Send back</qa-btn></div>`;
+      `<div class="planhead">Plan</div>` +
+      rows.map(r => `<div class="planrow s-${r.s}"><span class="planmark"></span><span class="plantext">${r.t}</span></div>`).join('');
   }
 });
 
-/* ---- qa-turn: a completed turn folded to a one-line summary in the thread.
-       outcome=end_turn|refusal|error|cancelled · turns · cost · denials ---- */
+/* ---- qa-turn: a quiet boundary line between turns (ACP result / stop_reason) —
+        a hairline + a muted label, NOT a card. outcome=end_turn|refusal|error|cancelled ---- */
 customElements.define('qa-turn', class extends HTMLElement {
   connectedCallback() {
     const outcome = (this.getAttribute('outcome') || 'end_turn').toLowerCase();
-    const OUT = { end_turn:['ok','✓','Turn complete'], refusal:['bad','!','Refused'],
-                  error:['bad','!','Turn errored'], cancelled:['mut','■','Cancelled'] };
-    const [cls, glyph, label] = OUT[outcome] || OUT.end_turn;
+    const OUT = { end_turn:['✓','Turn complete'], refusal:['⦸','Refused'], error:['!','Turn errored'], cancelled:['■','Cancelled'] };
+    const [glyph, label] = OUT[outcome] || OUT.end_turn;
     const denials = this.getAttribute('denials');
     const meta = [
       this.getAttribute('turns') ? `${esc(this.getAttribute('turns'))} turns` : '',
       this.getAttribute('cost') ? esc(this.getAttribute('cost')) : '',
       (denials && denials !== '0') ? `${esc(denials)} denied` : ''
     ].filter(Boolean).join(' · ');
+    if (outcome !== 'end_turn') this.classList.add('bad');
+    this.innerHTML = `<span class="tsline"><span class="tstext">${glyph} ${esc(label)}${meta ? ` · ${meta}` : ''}</span></span>`;
+  }
+});
+
+/* ---- qa-ask: the ONE inline "question box" the agent surfaces when it needs a
+        human — permission (canUseTool), a question (AskUserQuestion), or an
+        approve / send-back on something it produced. Marked with the accent so it
+        reads as "your move." label=eyebrow · q=the ask (may contain <code>) ·
+        options="Label|desc, Label|desc" (first is primary). ---- */
+customElements.define('qa-ask', class extends HTMLElement {
+  connectedCallback() {
+    const label = this.getAttribute('label') || 'Needs you';
+    const q = this.getAttribute('q') || '';                 // trusted wireframe markup
+    const answered = this.getAttribute('answered');         // past ask → quiet, resolved line
+    if (answered) {
+      this.classList.add('answered');
+      this.innerHTML = `<div class="asklabel">${esc(label)}</div><div class="askq">${q}</div><div class="askdone">✓ ${esc(answered)}</div>`;
+      return;
+    }
+    const opts = (this.getAttribute('options') || '').split(',').map(s => s.trim()).filter(Boolean);
     this.innerHTML =
-      `<button class="tsbar" type="button">
-         <span class="tsdot ${cls}">${glyph}</span>
-         <span class="tslabel">${esc(label)}</span>
-         <span class="tsmeta">${meta}</span>
-         <span class="tschev">▸</span>
-       </button>`;
-    this.querySelector('.tsbar').onclick = () => this.classList.toggle('open');
+      `<div class="asklabel">${esc(label)}</div>
+       <div class="askq">${q}</div>
+       <div class="askopts">${opts.map((o, i) => {
+         const [l, d] = o.split('|').map(s => s.trim());
+         return `<button class="askopt${i === 0 ? ' primary' : ''}" type="button"><span class="ol">${esc(l)}</span>${d ? `<span class="od">${esc(d)}</span>` : ''}</button>`;
+       }).join('')}</div>`;
   }
 });
 

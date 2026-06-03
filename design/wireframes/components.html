@@ -65,11 +65,11 @@
         <qa-btn variant="ghost" id="demoDoc">Open a sample .md →</qa-btn>
       </div>
 
-      <div class="sec"><h2>agent-thread components — qa-tool · qa-artifact · qa-turn</h2>
-        <p class="pagesub">The live agent thread, rendered from observed ACP <code>session/update</code> events. They live in the assistant drawer; shown here on the page for the full state range.</p>
+      <div class="sec"><h2>agent thread — qa-tool · qa-plan · qa-turn · qa-ask</h2>
+        <p class="pagesub">The live thread, keyed to ACP <code>session/update</code> events — one flat, uniform piece per event type (à la Zed/Cursor), not stacked cards. They live in the assistant drawer; shown here for the full state range.</p>
 
-        <h3 style="font-size:.8rem;margin:.5rem 0 .35rem;color:var(--muted)">qa-tool — collapsible tool-call step (queued · executing · completed · failed)</h3>
-        <div style="display:flex;flex-direction:column;gap:.5rem;max-width:420px">
+        <h3 style="font-size:.8rem;margin:.5rem 0 .35rem;color:var(--muted)">qa-tool — one row for every tool (queued · running · done · failed); click to expand</h3>
+        <div style="display:flex;flex-direction:column;gap:.15rem;max-width:420px">
           <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
           <qa-tool kind="execute" status="executing" name="Terminal · <code>npm test</code>"></qa-tool>
           <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
@@ -78,17 +78,33 @@
           <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">File has not been read yet. Read it first before writing.</span></qa-tool>
         </div>
 
-        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-artifact — produced artifact under review (the in-thread review gate)</h3>
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-plan — the agent's task list</h3>
         <div style="max-width:420px">
-          <qa-artifact name="test_plan/00_overview.md" kind="plan" summary="Test plan overview — 4 sections, 12 scenarios drafted from the story.">## Test Plan — See the stories in the studio
-**Scope.** The studio reads docs/stories/*.md and renders each story…
-**Sections.** 1 Overview · 2 Scenarios · 3 Traceability · 4 Risks</qa-artifact>
+          <qa-plan>
+            <div data-s="done">Read the story &amp; baseline</div>
+            <div data-s="doing">Draft the test-plan overview</div>
+            <div data-s="todo">Write the scenario sections (TS-01…)</div>
+          </qa-plan>
         </div>
 
-        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-turn — a completed turn folded to a one-line summary</h3>
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-turn — a quiet boundary line between turns</h3>
         <div style="display:flex;flex-direction:column;gap:.4rem;max-width:420px">
           <qa-turn outcome="end_turn" turns="5" cost="$0.31" denials="2"></qa-turn>
           <qa-turn outcome="error" turns="1" cost="$0.04"></qa-turn>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">qa-ask — the inline question box (permission / question / approve); <code>answered</code> = resolved</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem;max-width:420px">
+          <qa-ask label="Permission · canUseTool" q="Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?"
+            options="Always allow|Approve Write for this session, Allow once|Just this one call, Reject|Deny and say why"></qa-ask>
+          <qa-ask label="Review · the plan" answered="Approved — continue" q="Approve <code>test_plan/00_overview.md</code>?"></qa-ask>
+        </div>
+
+        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.qa-wire — the raw session/update frames (POC wire view), toggled on demand</h3>
+        <div class="qa-wire" style="max-width:420px">
+          <div class="wf out">→ {"jsonrpc":"2.0","id":1,"method":"initialize", …}</div>
+          <div class="wf in">← {"method":"session/update","params":{"update":{"sessionUpdate":"tool_call", …}}}</div>
+          <div class="wf in">← {"id":0,"method":"session/request_permission", …}</div>
         </div>
       </div>
 
@@ -153,11 +169,13 @@
     </div>
   </main>
   <qa-drawer>
-    <div class="msg user">Plan the tests for STORY-001 — see the stories in the studio.</div>
-    <div class="act">▸ read story · detected Type B · drafted plan · ran GATE 1</div>
-    <div class="msg bot">GATE 1 passed. Approve to generate the cases, or tell me what to change.</div>
-    <qa-gate-card verdict="pass" title="GATE 1 — Plan completeness"
-      detail="C1 coverage · C2 overlap · C3 traceability · C4 naming · C5 fidelity."></qa-gate-card>
+    <div class="msg user">Plan the tests for STORY-001.</div>
+    <div class="act">▸ loaded planning-tests · detected Type B</div>
+    <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
+<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
+    <div class="msg bot">Drafted the plan overview.</div>
+    <qa-ask label="Permission · canUseTool" q="Allow <code>Write test_plan/00_overview.md</code>?"
+      options="Always allow|For this session, Allow once|Just this call, Reject|Deny"></qa-ask>
   </qa-drawer>
   <qa-md-viewer></qa-md-viewer>
 </qa-app>
