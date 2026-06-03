@@ -385,7 +385,7 @@ customElements.define('qa-ask', class extends HTMLElement {
        <div class="askq">${q}</div>
        <div class="askopts">${opts.map((o, i) => {
          const [l, d] = o.split('|').map(s => s.trim());
-         return `<button class="askopt${i === 0 ? ' primary' : ''}" type="button"><span class="ol">${esc(l)}</span>${d ? `<span class="od">${esc(d)}</span>` : ''}</button>`;
+         return `<button class="qa-btn sm${i === 0 ? ' primary' : ''}" type="button"${d ? ` title="${esc(d)}"` : ''}>${esc(l)}</button>`;
        }).join('')}</div>`;
   }
 });

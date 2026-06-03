@@ -53,38 +53,25 @@
       </div>
     </div>
 
-    <!-- ACTIVE (default): a session mid-turn, paused on a permission -->
+    <!-- ACTIVE (default): the real fake-agent turn, paused on a permission.
+         Mirrors the hub's session/update sequence in code/hub/src/server.ts:
+         available_commands → agent text → plan → tool_call(ls) → request_permission. -->
     <div id="thread-active">
-      <qa-turn outcome="end_turn" turns="3" cost="$0.12"></qa-turn>
-
       <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
-      <div class="act">▸ loaded planning-tests · detected Type B (feature)</div>
+      <div class="act">▸ 2 commands available · jr-trace · tw-plan-init</div>
+
+      <div class="msg bot">Planning the tests for STORY-001…</div>
 
       <qa-plan>
-        <div data-s="done">Read the story &amp; baseline</div>
+        <div data-s="done">Read the story</div>
         <div data-s="doing">Draft the test-plan overview</div>
-        <div data-s="todo">Write the scenario sections (TS-01…)</div>
-        <div data-s="todo">Build the traceability matrix</div>
+        <div data-s="todo">Write the scenario sections</div>
       </qa-plan>
 
-      <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
-      <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
-<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
-      <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">⚠ File has not been read yet. Read it first before writing.</span></qa-tool>
-      <qa-tool kind="edit" status="completed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="add">+ # Test Plan — See the stories in the studio</span>
-<span class="add">+ Scope · Scenarios (TS-01…12) · Traceability · Risks</span>
-<a class="openfile" data-open="plan">⤢ Open test_plan/00_overview.md</a></qa-tool>
+      <qa-tool kind="execute" status="completed" name="<code>ls docs/stories</code>" open>STORY-001.md  STORY-002.md  STORY-003.md</qa-tool>
 
-      <qa-ask label="Review · the plan" answered="Approved — continue"
-        q="Approve <code>test_plan/00_overview.md</code> so the agent can write the section files?"></qa-ask>
-
-      <div class="msg bot">On it — writing the first scenario section now<span class="qa-caret"></span></div>
-
-      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open><span class="add">+ # TS-01 · Render the stories list</span>
-<span class="add">+ Given docs/stories has 3 files · When the studio opens · Then all 3 appear</span></qa-tool>
-
-      <qa-ask label="Permission · canUseTool"
-        q="Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?"
+      <qa-ask label="Permission"
+        q="Allow the agent to <code>Write test_plan/00_overview.md</code>?"
         options="Always allow|Approve Write for the rest of this session, Allow once|Just this one call, Reject|Deny and tell the agent why"></qa-ask>
     </div>
   </qa-drawer>
