@@ -9,9 +9,6 @@
 <style>
  /* screen-local only — one-off chat content; everything shared comes from components.css. Tokens only. */
  .stories-grid{grid-template-columns:7rem 1fr 6rem}   /* ratio per-screen; .sid/.read cells are shared (components.css) */
- /* an "open this file" link inside a tool result */
- .openfile{display:inline-block;margin-top:.35rem;color:var(--accent);text-decoration:underline;cursor:pointer;
-   font-family:inherit;font-size:.72rem}
  /* empty-session state (no thread yet) */
  #thread-empty:not([hidden]){flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
    text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
@@ -59,6 +56,7 @@
          Mirrors the hub's session/update sequence in code/hub/src/server.ts:
          available_commands → agent text → plan → tool_call(ls) → request_permission. -->
     <div id="thread-active">
+      <qa-turn outcome="end_turn" turns="2" cost="$0.04"></qa-turn>
       <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
       <div class="act">▸ 2 commands available · jr-trace · tw-plan-init</div>
 
@@ -78,22 +76,13 @@
     </div>
   </qa-drawer>
 
-  <qa-md-viewer></qa-md-viewer>
 </qa-app>
 <script>
  // Wireframe wiring. The real panel renders this thread from the hub's ACP
- // session/update stream; here we demonstrate the states + the raw view + a preview.
- const PLAN = {
-   name: 'test_plan/00_overview.md',
-   rendered: `<h1>Test Plan — See the stories in the studio</h1>
-     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title.</p>
-     <h2>Sections</h2><ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability</li><li>4 — Risks</li></ul>`,
-   source: '# Test Plan — See the stories in the studio\n\n**Scope.** Reads `docs/stories/*.md` …\n\n## Sections\n1. Overview\n2. Scenarios (TS-01…TS-12)\n3. Traceability\n4. Risks\n'
- };
+ // session/update stream; here we demonstrate the states. (Artifact preview +
+ // its doc viewer are the deferred follow-up — the real fake-agent turn produces
+ // no artifact event yet.)
  document.addEventListener('DOMContentLoaded', () => {
-   // Open a produced file in the doc viewer.
-   document.querySelectorAll('.openfile[data-open="plan"]').forEach(a => a.onclick = () => qaDoc.open(PLAN));
-
    // ?state=empty → the fresh-session state.
    if (new URLSearchParams(location.search).get('state') === 'empty') {
      document.getElementById('thread-active').hidden = true;
