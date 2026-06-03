@@ -13,6 +13,6 @@ const addr = server.address();
 const actualPort = typeof addr === "object" && addr ? addr.port : port;
 process.stderr.write(
   `[hub] http+ws on http://localhost:${actualPort}  (agent: ${fake ? "FAKE" : "real claude-code-acp"})\n` +
-  `[hub]   GET  /api/stories         · GET /api/stories/:id\n` +
+  `[hub]   GET  /api/repos           · GET /api/repos/:repo/stories · GET /api/repos/:repo/stories/:id\n` +
   `[hub]   WS   /ws/agent\n`,
 );
