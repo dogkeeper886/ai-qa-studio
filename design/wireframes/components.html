@@ -49,8 +49,8 @@
           <qa-toggle></qa-toggle><span class="qa-muted">off</span></div>
       </div>
 
-      <div class="sec"><h2>qa-decision — the "Your call" Decision member</h2>
-        <p class="pagesub">One component for every decision — gates and execution approvals. Default = the gate variant; configure <code>title</code> / <code>actions</code> / <code>attention</code> for others.</p>
+      <div class="sec"><h2>qa-decision — the "Your call" gate/approval panel</h2>
+        <p class="pagesub">The decision panel for dashboard + gate screens — boxed, with an instruction field. (The chat thread uses the leaner <code>qa-ask</code> instead; <code>qa-gate-card</code> below is the compact verdict tile.) Default = the gate variant; configure <code>title</code> / <code>actions</code> / <code>attention</code> for others.</p>
         <h3 style="font-size:.8rem;margin:.5rem 0 .25rem;color:var(--muted)">Gate variant (default + recommendation)</h3>
         <qa-decision recommendation="name the SSID in TS-02's assertion (advisory)"></qa-decision>
         <h3 style="font-size:.8rem;margin:1rem 0 .25rem;color:var(--muted)">Attention variant (paused / needs-you + custom actions)</h3>
@@ -59,6 +59,12 @@
           detail="Defect, or an intended change? Evidence is attached to each step."
           placeholder="Tell the agent what to do — or pick an action…"
           actions="Confirm FAIL · log defect, Override to PASS, Retry step, Pause whole run"></qa-decision>
+      </div>
+
+      <div class="sec"><h2>qa-gate-card — a compact gate verdict card</h2>
+        <p class="pagesub">A verdict tile (PASS / FAIL / BLOCKED) with approve + iterate actions — for showing a gate's <em>result</em>, where <code>qa-decision</code> asks for the call.</p>
+        <qa-gate-card verdict="pass" title="GATE 1 — Plan completeness"
+          detail="C1 coverage · C2 overlap · C3 traceability · C4 naming · C5 fidelity."></qa-gate-card>
       </div>
 
       <div class="sec"><h2>qa-md-viewer</h2>
@@ -117,18 +123,6 @@
           <span class="badge fail">FAIL</span>
           <span class="badge blocked">BLOCKED</span>
           <span class="badge muted">In review</span>
-        </div>
-
-        <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.decision — the agent's "waiting on a human" panel (AskUserQuestion / canUseTool gate)</h3>
-        <p class="pagesub" style="margin:0 0 .5rem">Option buttons with a label + description — maps an ACP <code>session/request_permission</code> straight to the UI. Docks in the drawer, just above the composer.</p>
-        <div class="decision" style="max-width:420px;border:1px solid var(--border);border-radius:10px">
-          <div class="decision-label">Permission · canUseTool</div>
-          <div class="decision-question">Allow the agent to run <code>Write test_plan/00_overview.md</code>?</div>
-          <div class="decision-options">
-            <button class="decision-opt"><span class="opt-label">Always allow</span><span class="opt-desc">Approve Write for the rest of this session</span></button>
-            <button class="decision-opt"><span class="opt-label">Allow once</span><span class="opt-desc">Just this one call</span></button>
-            <button class="decision-opt"><span class="opt-label">Reject</span><span class="opt-desc">Deny, and tell the agent why</span></button>
-          </div>
         </div>
 
         <h3 style="font-size:.8rem;margin:1rem 0 .35rem;color:var(--muted)">.stat — number + label tile (used by dashboard headers)</h3>
