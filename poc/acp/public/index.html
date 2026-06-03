@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI QA Studio — ACP loop POC (#10)</title>
+<style>
+  :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+  body { margin: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; height: 100vh; }
+  header { grid-column: 1 / 3; padding: .6rem 1rem; border-bottom: 1px solid #8884; display: flex; gap: .5rem; align-items: center; }
+  header h1 { font-size: .95rem; margin: 0; font-weight: 600; }
+  header .spacer { flex: 1; }
+  input[type=text] { flex: 1; min-width: 12rem; padding: .4rem .5rem; }
+  button { padding: .4rem .7rem; cursor: pointer; }
+  #thread, #wire { overflow: auto; padding: 1rem; }
+  #wire { border-left: 1px solid #8884; background: #0001; font: 11px/1.45 ui-monospace, monospace; white-space: pre-wrap; word-break: break-all; }
+  .col-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin: 0 0 .5rem; }
+  .msg { margin: .5rem 0; padding: .5rem .7rem; border-radius: 8px; border: 1px solid #8883; }
+  .msg.thought { opacity: .65; font-style: italic; }
+  .msg.tool { border-color: #3b82f688; background: #3b82f611; }
+  .msg.tool .st { font-size: .72rem; padding: .05rem .4rem; border-radius: 6px; border: 1px solid #8885; margin-left: .4rem; }
+  .msg.tool pre { margin: .3rem 0 0; font: 11px/1.4 ui-monospace, monospace; white-space: pre-wrap; opacity: .8; }
+  .msg.plan li.in_progress { font-weight: 600; }
+  .perm { border-color: #f59e0b; background: #f59e0b18; }
+  .perm button { margin: .3rem .4rem 0 0; }
+  .tag { font-size: .7rem; opacity: .6; }
+  .frame-out { color: #16a34a; } .frame-in { color: #2563eb; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ACP loop POC</h1>
+  <span id="status" class="tag">connecting…</span>
+  <span class="spacer"></span>
+  <input id="prompt" type="text" value="Use the Write tool to create the file poc/acp/samples/web-hello.txt containing one line: hello from the browser over ACP. Then confirm in one short sentence." />
+  <button id="run">Run turn</button>
+</header>
+<main id="thread"><p class="col-title">Thread — session/update → components</p></main>
+<aside id="wire"><p class="col-title">Wire — every JSON-RPC frame, verbatim</p></aside>
+
+<script type="module">
+const thread = document.getElementById("thread");
+const wire = document.getElementById("wire");
+const statusEl = document.getElementById("status");
+
+const ws = new WebSocket(`ws://${location.host}/ws`);
+let nextId = 1;
+const pending = new Map();            // id -> {resolve, reject}
+let sessionId = null;
+let initialized = false;       // tracked apart from sessionId: initialize is once
+                               // per connection, so a failed session/new must not
+                               // re-send it on the next Run (that would wedge).
+const toolEls = new Map();            // toolCallId -> DOM node
+
+function logFrame(dir, obj) {
+  const div = document.createElement("div");
+  div.className = dir === "out" ? "frame-out" : "frame-in";
+  div.textContent = (dir === "out" ? "→ " : "← ") + JSON.stringify(obj);
+  wire.appendChild(div);
+  wire.scrollTop = wire.scrollHeight;
+}
+function addMsg(cls, html) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerHTML = html;
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+  return div;
+}
+
+// --- minimal JSON-RPC over the WS (the browser IS the ACP client) ----------
+function sendRequest(method, params) {
+  const id = nextId++;
+  const frame = { jsonrpc: "2.0", id, method, params };
+  logFrame("out", frame);
+  ws.send(JSON.stringify(frame));
+  return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+}
+function sendResult(id, result) {
+  const frame = { jsonrpc: "2.0", id, result };
+  logFrame("out", frame);
+  ws.send(JSON.stringify(frame));
+}
+function sendError(id, code, message) {
+  const frame = { jsonrpc: "2.0", id, error: { code, message } };
+  logFrame("out", frame);
+  ws.send(JSON.stringify(frame));
+}
+
+ws.onopen = () => { statusEl.textContent = "connected"; };
+ws.onclose = () => { statusEl.textContent = "disconnected"; };
+ws.onerror = () => { statusEl.textContent = "ws error"; };
+
+ws.onmessage = (ev) => {
+  const msg = JSON.parse(ev.data);
+  logFrame("in", msg);
+  if (msg.id !== undefined && (msg.result !== undefined || msg.error !== undefined)) {
+    // response to one of our requests
+    const p = pending.get(msg.id); pending.delete(msg.id);
+    if (p) msg.error ? p.reject(msg.error) : p.resolve(msg.result);
+    return;
+  }
+  if (msg.method && msg.id !== undefined) { handleServerRequest(msg); return; }  // server→client request
+  if (msg.method) { handleNotification(msg); return; }                            // notification
+};
+
+// --- server → client requests (the interesting one is permission) ----------
+function handleServerRequest(msg) {
+  if (msg.method === "session/request_permission") {
+    renderPermission(msg.id, msg.params);
+    return;
+  }
+  // We advertised fs:false / terminal:false, so the agent shouldn't call these.
+  sendError(msg.id, -32601, `client does not implement ${msg.method}`);
+}
+
+function renderPermission(id, params) {
+  const tool = params.toolCall?.title ?? params.toolCall?.toolCallId ?? "tool call";
+  const el = addMsg("perm", `<strong>Permission requested</strong> — ${escapeHtml(tool)}<div></div>`);
+  const row = el.lastElementChild;
+  for (const opt of params.options) {
+    const b = document.createElement("button");
+    b.textContent = `${opt.name} (${opt.kind})`;
+    b.onclick = () => {
+      sendResult(id, { outcome: { outcome: "selected", optionId: opt.optionId } });
+      row.innerHTML = `<span class="tag">→ selected: ${escapeHtml(opt.name)}</span>`;
+    };
+    row.appendChild(b);
+  }
+}
+
+// --- notifications: session/update → components (the whole point) -----------
+function handleNotification(msg) {
+  if (msg.method !== "session/update") return;
+  const u = msg.params.update;
+  switch (u.sessionUpdate) {
+    case "agent_message_chunk":
+      appendChunk("agent", u.content); break;
+    case "agent_thought_chunk":
+      appendChunk("thought", u.content); break;
+    case "tool_call":
+    case "tool_call_update":
+      renderTool(u); break;
+    case "plan":
+      renderPlan(u); break;
+    case "available_commands_update":
+      addMsg("", `<span class="tag">${u.availableCommands.length} slash commands available</span>`); break;
+    default:
+      addMsg("", `<span class="tag">${escapeHtml(u.sessionUpdate)}</span>`);
+  }
+}
+
+let curAgentEl = null, curThoughtEl = null;
+function appendChunk(kind, content) {
+  if (!content || content.type !== "text") return;
+  let el = kind === "agent" ? curAgentEl : curThoughtEl;
+  if (!el) {
+    el = addMsg(kind === "agent" ? "agent" : "thought", "");
+    if (kind === "agent") curAgentEl = el; else curThoughtEl = el;
+  }
+  el.textContent += content.text;
+}
+function renderTool(u) {
+  let el = toolEls.get(u.toolCallId);
+  if (!el) {
+    el = addMsg("tool", `<strong>${escapeHtml(u.title ?? u.toolCallId)}</strong><span class="st"></span><pre></pre>`);
+    toolEls.set(u.toolCallId, el);
+    curAgentEl = null; // a tool boundary ends the current text bubble
+  }
+  if (u.status) el.querySelector(".st").textContent = u.status;
+  const text = collectContentText(u.content);
+  if (text) el.querySelector("pre").textContent = text;
+}
+function renderPlan(u) {
+  const items = u.entries.map(e => `<li class="${e.status}">${escapeHtml(e.content)} <span class="tag">[${e.status}]</span></li>`).join("");
+  addMsg("plan", `<strong>Plan</strong><ul>${items}</ul>`);
+}
+function collectContentText(content) {
+  if (!Array.isArray(content)) return "";
+  return content.map(c => {
+    if (c.type === "content" && c.content?.type === "text") return c.content.text;
+    if (c.type === "diff") return `--- ${c.path}\n${c.newText ?? ""}`;
+    return "";
+  }).filter(Boolean).join("\n");
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+// --- drive one prompt turn -------------------------------------------------
+document.getElementById("run").onclick = async () => {
+  const text = document.getElementById("prompt").value;
+  curAgentEl = curThoughtEl = null;
+  try {
+    if (!initialized) {
+      await sendRequest("initialize", {
+        protocolVersion: 1,
+        clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false },
+        clientInfo: { name: "aiqa-acp-poc-web", version: "0.0.1" },
+      });
+      initialized = true;
+    }
+    if (!sessionId) {
+      const { cwd } = await (await fetch("/cwd")).json();
+      const ns = await sendRequest("session/new", { cwd, mcpServers: [] });
+      sessionId = ns.sessionId;
+      addMsg("", `<span class="tag">session ${escapeHtml(sessionId)}</span>`);
+    }
+    addMsg("user", `<strong>You:</strong> ${escapeHtml(text)}`);
+    const res = await sendRequest("session/prompt", { sessionId, prompt: [{ type: "text", text }] });
+    addMsg("", `<span class="tag">turn complete — stopReason: ${escapeHtml(res.stopReason)}</span>`);
+  } catch (e) {
+    addMsg("", `<span class="tag">error: ${escapeHtml(e.message ?? JSON.stringify(e))}</span>`);
+  }
+};
+</script>
+</body>
+</html>
