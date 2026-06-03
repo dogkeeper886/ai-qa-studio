@@ -110,6 +110,7 @@ qa-drawer .dbox{background:var(--bg);border:1px solid var(--border);border-radiu
        Framework primitive used inside list/panel containers. Don't reinvent
        per-page — pass kind + title + sub + optional link to the component. */
 .qa-empty{padding:.75rem 1.125rem;display:flex;gap:.75rem;align-items:flex-start}
+.qa-empty[hidden]{display:none}  /* the class display:flex would otherwise beat the UA [hidden] */
 .qa-empty-icon{width:20px;height:20px;border-radius:999px;flex:none;display:flex;align-items:center;
   justify-content:center;font-size:.65rem;font-weight:800;margin-top:.05rem;
   background:transparent;color:var(--muted);border:1px dashed var(--border)}

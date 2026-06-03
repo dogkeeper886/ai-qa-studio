@@ -23,7 +23,9 @@
       <h1 class="pagehead">Stories</h1>
       <p class="pagesub">The feature requests in this project, read straight from <code>docs/stories/</code> — the source of truth. Open one to read it without leaving the studio.</p>
 
-      <div class="table">
+      <!-- Live-data states (the list is read from the hub): default shows the
+           rows; ?state=loading|empty|error swaps in the matching .qa-empty cell. -->
+      <div class="table" id="stories-table">
         <div class="thead stories-grid"><div>ID</div><div>Title</div><div></div></div>
         <div class="trow stories-grid" data-story="STORY-001">
           <div class="sid">STORY-001</div>
@@ -40,6 +42,16 @@
           <div class="stitle">Stand up the studio foundation</div>
           <div class="read">Read →</div>
         </div>
+      </div>
+      <div class="table" id="stories-state" hidden>
+        <div class="qa-empty qa-empty-loading" data-state="loading"><div class="qa-empty-icon">…</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">Loading stories…</div></div></div>
+        <div class="qa-empty" data-state="empty" hidden><div class="qa-empty-icon">∅</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">No stories yet</div>
+            <div class="qa-empty-sub">Add a <code>STORY-NNN.md</code> under <code>docs/stories/</code> and it appears here.</div></div></div>
+        <div class="qa-empty qa-empty-error" data-state="error" hidden><div class="qa-empty-icon">!</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">Couldn't reach the hub</div>
+            <div class="qa-empty-sub">Is it running? <code>make serve-fake</code> in <code>code/hub/</code>.</div></div></div>
       </div>
     </div>
   </main>
@@ -101,6 +113,13 @@
    // shows the assistant as its own state rather than a drawer over the list.
    const a = document.querySelector('qa-topbar [data-assistant]');
    if (a) { const n = a.cloneNode(true); a.replaceWith(n); n.onclick = () => location.href = 'chat.html'; }
+   // ?state=loading|empty|error — swap the rows for the matching live-data cell.
+   const state = new URLSearchParams(location.search).get('state');
+   if (state) {
+     document.getElementById('stories-table').hidden = true;
+     document.getElementById('stories-state').hidden = false;
+     document.querySelectorAll('#stories-state [data-state]').forEach(c => { c.hidden = c.getAttribute('data-state') !== state; });
+   }
  });
 </script>
 </body>
