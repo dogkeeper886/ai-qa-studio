@@ -55,18 +55,6 @@
       </div>
     </div>
 
-    <!-- RAW: the verbatim session/update frames (the POC wire view) — toggled by ⟨⟩ Raw -->
-    <div id="thread-raw" hidden>
-      <div class="qa-wire">
-        <div class="wf out">→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{}}}</div>
-        <div class="wf in">← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"agentInfo":{"name":"claude-code-acp"}}}</div>
-        <div class="wf out">→ {"jsonrpc":"2.0","id":3,"method":"session/prompt","params":{"prompt":[{"type":"text","text":"Plan tests for STORY-001 …"}]}}</div>
-        <div class="wf in">← {"method":"session/update","params":{"update":{"sessionUpdate":"tool_call","toolCallId":"toolu_01","title":"ls docs/stories","kind":"execute","status":"completed"}}}</div>
-        <div class="wf in">← {"method":"session/update","params":{"update":{"sessionUpdate":"agent_message_chunk","content":{"type":"text","text":"Drafted the plan overview."}}}}</div>
-        <div class="wf in">← {"id":0,"method":"session/request_permission","params":{"toolCall":{"title":"Write test_plan/sections/TS-01.md"},"options":[{"optionId":"allow","name":"Allow"}]}}</div>
-      </div>
-    </div>
-
     <!-- ACTIVE (default): a session mid-turn, paused on a permission -->
     <div id="thread-active">
       <qa-turn outcome="end_turn" turns="3" cost="$0.12"></qa-turn>
@@ -123,22 +111,6 @@
    if (new URLSearchParams(location.search).get('state') === 'empty') {
      document.getElementById('thread-active').hidden = true;
      document.getElementById('thread-empty').hidden = false;
-   }
-
-   // Add a "⟨⟩ Raw" toggle to the drawer header → swaps thread ⇆ raw frames.
-   const right = document.querySelector('qa-drawer .dhead-right');
-   if (right) {
-     const btn = document.createElement('button');
-     btn.className = 'qa-iconbtn'; btn.type = 'button'; btn.textContent = '⟨⟩ Raw';
-     btn.title = 'Show the raw session/update frames';
-     const setRaw = raw => {
-       btn.classList.toggle('on', raw);
-       document.getElementById('thread-active').hidden = raw;
-       document.getElementById('thread-raw').hidden = !raw;
-     };
-     btn.onclick = () => setRaw(!btn.classList.contains('on'));
-     if (new URLSearchParams(location.search).get('raw') !== null) setRaw(true);  // ?raw deep-link
-     right.prepend(btn);
    }
  });
 </script>
