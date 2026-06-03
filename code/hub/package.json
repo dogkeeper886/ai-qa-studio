@@ -1,0 +1,22 @@
+{
+  "name": "@ai-qa-studio/hub",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "AI QA Studio hub — serves docs/stories and bridges an ACP agent session over WebSocket.",
+  "scripts": {
+    "serve": "tsx src/serve.ts",
+    "serve:fake": "HUB_FAKE=1 tsx src/serve.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zed-industries/claude-code-acp": "0.16.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
