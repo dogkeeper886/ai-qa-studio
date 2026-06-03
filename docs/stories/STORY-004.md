@@ -54,5 +54,5 @@ The *how* — worked out on the issue (research / PoC / decisions):
 - Issues: #16 (spike: agent-in-repo + studio skills), #17 (hub: serve a chosen repo),
   #18 (frontend: repo list + repo page — supersedes #4), #19 (chat scoped to active repo
   — continues #13)
-- PR: #20 open — #17 + #18 (+ markdown rendering and the Projects-first nav), awaiting
-  review. #16 (spike) and #19 (chat) not included.
+- PR: #20 merged (2026-06-03) — #17 + #18 + markdown rendering + Projects-first nav;
+  supersedes #4. Story stays **in progress**: #16 (spike) and #19 (chat) remain.
