@@ -37,4 +37,4 @@ The *how* — worked out on the issues:
 ## Status
 
 - Created: 2026-06-02
-- Issues: #2, #3
+- Issues: #2 (foundation) → PR #15 open, #3 (UI skills) ✓ merged
