@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI QA Studio — Assistant</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="components.js"></script>
+<style>
+ /* screen-local only — one-off chat content; everything shared comes from components.css. Tokens only. */
+ .stories-grid{grid-template-columns:7rem 1fr 6rem}   /* ratio per-screen; .sid/.read cells are shared (components.css) */
+ /* an "open this file" link inside a tool result */
+ .openfile{display:inline-block;margin-top:.35rem;color:var(--accent);text-decoration:underline;cursor:pointer;
+   font-family:inherit;font-size:.72rem}
+ /* empty-session state (no thread yet) */
+ #thread-empty:not([hidden]){flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+   text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
+ #thread-empty .ce-glyph{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--bg);
+   display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)}
+ #thread-empty .ce-title{font-size:.95rem;font-weight:700;color:var(--fg)}
+ #thread-empty .ce-sub{font-size:.78rem;line-height:1.55;max-width:18rem}
+ #thread-empty .ce-suggest{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;width:100%}
+ #thread-empty .ce-suggest .cchip{text-align:left}
+</style>
+</head>
+<body class="theme-light">
+<qa-app>
+  <qa-sidebar active="stories"></qa-sidebar>
+  <main>
+    <qa-topbar crumb="AI QA Studio / Stories|stories.html / Assistant"></qa-topbar>
+    <div class="qa-content">
+      <h1 class="pagehead">Stories</h1>
+      <p class="pagesub">The feature requests in this project, read from <code>docs/stories/</code>. The assistant is open on the right — drag its left edge to resize, or close it with ✕.</p>
+      <div class="table">
+        <div class="thead stories-grid"><div>ID</div><div>Title</div><div></div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-001</div><div>See the project's stories in the studio</div><div class="read">Read →</div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-002</div><div>Talk to the AI agent in the studio</div><div class="read">Read →</div></div>
+        <div class="trow stories-grid"><div class="sid">STORY-003</div><div>Stand up the studio foundation</div><div class="read">Read →</div></div>
+      </div>
+    </div>
+  </main>
+
+  <qa-drawer title="✦ Assistant" placeholder="Message the agent — ⏎ to send" style="width:440px">
+    <!-- EMPTY: a fresh session (?state=empty) -->
+    <div id="thread-empty" hidden>
+      <div class="ce-glyph">✦</div>
+      <div class="ce-title">Start a session</div>
+      <div class="ce-sub">Ask the agent to trace a ticket, plan tests, or draft cases. You'll see every step, approve what it runs, and review what it produces — right here.</div>
+      <div class="ce-suggest">
+        <button class="cchip" type="button">Plan tests for STORY-001</button>
+        <button class="cchip" type="button">Trace a ticket into a workspace</button>
+        <button class="cchip" type="button">Draft test cases from a plan</button>
+      </div>
+    </div>
+
+    <!-- ACTIVE (default): a session mid-turn, paused on a permission -->
+    <div id="thread-active">
+      <qa-turn outcome="end_turn" turns="3" cost="$0.12"></qa-turn>
+
+      <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
+      <div class="act">▸ loaded planning-tests · detected Type B (feature)</div>
+
+      <qa-plan>
+        <div data-s="done">Read the story &amp; baseline</div>
+        <div data-s="doing">Draft the test-plan overview</div>
+        <div data-s="todo">Write the scenario sections (TS-01…)</div>
+        <div data-s="todo">Build the traceability matrix</div>
+      </qa-plan>
+
+      <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
+      <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
+<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
+      <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">⚠ File has not been read yet. Read it first before writing.</span></qa-tool>
+      <qa-tool kind="edit" status="completed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="add">+ # Test Plan — See the stories in the studio</span>
+<span class="add">+ Scope · Scenarios (TS-01…12) · Traceability · Risks</span>
+<a class="openfile" data-open="plan">⤢ Open test_plan/00_overview.md</a></qa-tool>
+
+      <qa-ask label="Review · the plan" answered="Approved — continue"
+        q="Approve <code>test_plan/00_overview.md</code> so the agent can write the section files?"></qa-ask>
+
+      <div class="msg bot">On it — writing the first scenario section now<span class="qa-caret"></span></div>
+
+      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open><span class="add">+ # TS-01 · Render the stories list</span>
+<span class="add">+ Given docs/stories has 3 files · When the studio opens · Then all 3 appear</span></qa-tool>
+
+      <qa-ask label="Permission · canUseTool"
+        q="Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?"
+        options="Always allow|Approve Write for the rest of this session, Allow once|Just this one call, Reject|Deny and tell the agent why"></qa-ask>
+    </div>
+  </qa-drawer>
+
+  <qa-md-viewer></qa-md-viewer>
+</qa-app>
+<script>
+ // Wireframe wiring. The real panel renders this thread from the hub's ACP
+ // session/update stream; here we demonstrate the states + the raw view + a preview.
+ const PLAN = {
+   name: 'test_plan/00_overview.md',
+   rendered: `<h1>Test Plan — See the stories in the studio</h1>
+     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title.</p>
+     <h2>Sections</h2><ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability</li><li>4 — Risks</li></ul>`,
+   source: '# Test Plan — See the stories in the studio\n\n**Scope.** Reads `docs/stories/*.md` …\n\n## Sections\n1. Overview\n2. Scenarios (TS-01…TS-12)\n3. Traceability\n4. Risks\n'
+ };
+ document.addEventListener('DOMContentLoaded', () => {
+   // Open a produced file in the doc viewer.
+   document.querySelectorAll('.openfile[data-open="plan"]').forEach(a => a.onclick = () => qaDoc.open(PLAN));
+
+   // ?state=empty → the fresh-session state.
+   if (new URLSearchParams(location.search).get('state') === 'empty') {
+     document.getElementById('thread-active').hidden = true;
+     document.getElementById('thread-empty').hidden = false;
+   }
+ });
+</script>
+</body>
+</html>
