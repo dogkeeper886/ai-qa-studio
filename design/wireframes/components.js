@@ -103,7 +103,7 @@ customElements.define('qa-topbar', class extends HTMLElement {
     const assistant = this.hasAttribute('no-assistant') ? '' : `<button class="qa-iconbtn" data-assistant>✦ Assistant</button>`;
     this.innerHTML =
       `<span class="crumb">${crumb}</span><div class="spacer"></div>
-       <button class="qa-iconbtn" data-theme-toggle>◐ Dark</button>${assistant}`;
+       <button class="qa-iconbtn" data-theme-toggle>◐ ${document.body.classList.contains('theme-dark') ? 'Light' : 'Dark'}</button>${assistant}`;
     this.querySelector('[data-theme-toggle]').onclick = e => toggleTheme(e.currentTarget);
     this.querySelector('[data-assistant]')?.addEventListener('click', () => toggleAssistant());
   }
