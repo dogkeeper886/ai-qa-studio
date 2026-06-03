@@ -9,10 +9,8 @@
 <style>
  /* screen-local only — shared chrome (incl. .pagehead/.pagesub) comes from components.css */
  /* stories table column ratios (chrome is shared; ratios stay per-screen) */
- .stories-grid{grid-template-columns:7rem 2fr 8rem}
- .trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+ .stories-grid{grid-template-columns:7rem 2fr 8rem}   /* ratio per-screen; .sid/.read cells are shared (components.css) */
  .trow .stitle{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- .trow .read{justify-self:end;color:var(--muted);font-size:.75rem}
  .trow:hover .read{color:var(--fg)}
 </style>
 </head>

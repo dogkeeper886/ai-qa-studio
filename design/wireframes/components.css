@@ -228,6 +228,10 @@ qa-toggle .switch.off .knob{left:2px}
   border-bottom:1px solid var(--border)}
 .trow{border-top:1px solid var(--border);cursor:pointer}
 .trow:hover{background:var(--bg)}
+/* shared list-table cell helpers (promoted once stories.html + chat.html shared them;
+   each table's grid-template-columns ratios still stay per-screen) */
+.trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}      /* id cell — mono */
+.trow .read{justify-self:end;color:var(--muted);font-size:.75rem}          /* trailing "Read →" cell */
 
 /* ---- modal overlay (.cfgmodal, .amodal — same backdrop, two historic names).
         The modal WINDOW (.cfgwin / .awin) stays screen-local — each modal's

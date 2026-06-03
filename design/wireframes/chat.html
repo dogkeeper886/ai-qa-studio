@@ -8,9 +8,7 @@
 <script defer src="components.js"></script>
 <style>
  /* screen-local only — one-off chat content; everything shared comes from components.css. Tokens only. */
- .stories-grid{grid-template-columns:7rem 1fr 6rem}
- .trow .sid{font-family:ui-monospace,Menlo,monospace;font-weight:700}
- .trow .read{justify-self:end;color:var(--muted);font-size:.75rem}
+ .stories-grid{grid-template-columns:7rem 1fr 6rem}   /* ratio per-screen; .sid/.read cells are shared (components.css) */
  /* an "open this file" link inside a tool result */
  .openfile{display:inline-block;margin-top:.35rem;color:var(--accent);text-decoration:underline;cursor:pointer;
    font-family:inherit;font-size:.72rem}
