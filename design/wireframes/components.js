@@ -168,7 +168,7 @@ customElements.define('qa-drawer', class extends HTMLElement {
          <div class="dctx">${ctx.map(c => `<span class="ctxchip">${esc(c)}<span class="x" title="Remove">✕</span></span>`).join('')}<button class="cchip" data-ctx type="button">＋ Add context</button><button class="cchip" data-cmd type="button">/ Commands</button></div>
          <div class="dpicker" hidden><div class="dpickhead">Commands</div>${cmds.map(c => { const [n, d] = c.split('|').map(s => s.trim()); return `<button class="dpickrow" type="button"><span class="dpickname">/${esc(n)}</span>${d ? `<span class="dpickdesc">${esc(d)}</span>` : ''}</button>`; }).join('') || '<div class="dpickempty">No commands available</div>'}</div>
          <div class="dattach" hidden><button class="dpickrow" type="button"><span class="dpickname">Story or file…</span></button><button class="dpickrow" type="button"><span class="dpickname">Image…</span></button></div>
-         <div class="dcompose"><div class="dbox">${esc(ph)}</div><button class="dsend" type="button" title="Send">↑</button></div>
+         <div class="dcompose"><textarea class="dbox" rows="1" placeholder="${esc(ph)}"></textarea><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
     // composer affordances: toggle the /Commands picker and the Add-context menu (one open at a time)
     const picker = this.querySelector('.dpicker'), attach = this.querySelector('.dattach');

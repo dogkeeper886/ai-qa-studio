@@ -93,7 +93,15 @@ qa-drawer .dhead-right{display:flex;align-items:center;gap:.5rem}  /* slot for t
 qa-drawer .dbody{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.875rem}
 qa-drawer .dinput{flex:none;border-top:1px solid var(--border);padding:.75rem 1rem}
 qa-drawer .dbox{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.55rem .75rem;
-  color:var(--muted);font-size:.8125rem}
+  color:var(--fg);font-size:.8125rem;font-family:inherit;line-height:1.4;resize:none;width:100%}
+qa-drawer .dbox::placeholder{color:var(--muted)}
+/* fresh-session empty state (matches chat.html #thread-empty) */
+qa-drawer .chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
+qa-drawer .chat-empty .ce-glyph{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)}
+qa-drawer .chat-empty .ce-title{font-size:.95rem;font-weight:700;color:var(--fg)}
+qa-drawer .chat-empty .ce-sub{font-size:.78rem;line-height:1.55;max-width:18rem}
 /* drawer message content (authored inside <qa-drawer>) */
 .msg{font-size:.8125rem;line-height:1.45;max-width:92%}
 .msg.user{align-self:flex-end;background:var(--bg);border:1px solid var(--border);color:var(--fg);

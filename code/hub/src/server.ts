@@ -282,6 +282,12 @@ export function startHub(opts: HubOptions = {}) {
     const url = new URL(req.url ?? "/", "http://localhost");
     const send = (code: number, type: string, body: string) => { res.writeHead(code, { "Content-Type": type }); res.end(body); };
 
+    if (url.pathname === "/api/cwd") {
+      // The agent session's working directory. The studio root for now; scoping
+      // it to the active repo is STORY-004 #19.
+      send(200, CONTENT_TYPES.json, JSON.stringify({ cwd: repoRoot }));
+      return;
+    }
     if (url.pathname === "/api/repos") {
       send(200, CONTENT_TYPES.json, JSON.stringify({ repos: await listRepos() }));
       return;
