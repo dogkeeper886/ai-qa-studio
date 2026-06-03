@@ -6,6 +6,13 @@ import "../../../design/wireframes/tokens.css";
 import "../../../design/wireframes/components.css";
 import "../../../design/wireframes/components.js"; // side effect: defines qa-* + window.qaDoc
 import { useEffect, useRef, useState } from "react";
+import MarkdownIt from "markdown-it";
+
+// Real markdown renderer for the doc viewer. html:false escapes any raw HTML in
+// a story file (no script injection); the default preset gives GFM tables, and
+// fenced blocks become <pre><code> — all styled by the design framework's
+// qa-md-viewer .md rules. linkify turns bare URLs into links.
+const markdown = new MarkdownIt({ html: false, linkify: true });
 
 const BRAND = (import.meta.env.VITE_APP_NAME as string | undefined) ?? "AI QA Studio";
 const REPOS_GRID = { gridTemplateColumns: "1fr 8rem" } as const;
@@ -111,8 +118,8 @@ function RepoStories({ repo, onBack }: { repo: string; onBack: () => void }) {
 
   async function openStory(s: Story): Promise<void> {
     try {
-      const md = await (await fetch(`/api/repos/${encodeURIComponent(repo)}/stories/${s.id}`)).text();
-      window.qaDoc?.open({ name: `${repo}/docs/stories/${s.file}`, rendered: mdToHtml(md), source: md });
+      const src = await (await fetch(`/api/repos/${encodeURIComponent(repo)}/stories/${s.id}`)).text();
+      window.qaDoc?.open({ name: `${repo}/docs/stories/${s.file}`, rendered: markdown.render(src), source: src });
     } catch {
       /* read view is hardened later; this proves the repo-scoped loop */
     }
@@ -189,25 +196,4 @@ function Cell({ kind, icon, title, sub }: { kind: string; icon: string; title: s
       </div>
     </div>
   );
-}
-
-/** Minimal markdown → HTML for the doc viewer (headings, lists, paragraphs,
- *  inline code/bold). The full renderer is a later concern; this proves the loop. */
-function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const inline = (s: string) =>
-    esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  const out: string[] = [];
-  let inList = false;
-  const closeList = () => { if (inList) { out.push("</ul>"); inList = false; } };
-  for (const line of md.split("\n")) {
-    const h = line.match(/^(#{1,3})\s+(.*)$/);
-    const li = line.match(/^[-*]\s+(.*)$/);
-    if (h) { closeList(); out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`); }
-    else if (li) { if (!inList) { out.push("<ul>"); inList = true; } out.push(`<li>${inline(li[1])}</li>`); }
-    else if (line.trim() === "") closeList();
-    else { closeList(); out.push(`<p>${inline(line)}</p>`); }
-  }
-  closeList();
-  return out.join("\n");
 }
