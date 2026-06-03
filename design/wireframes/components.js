@@ -51,29 +51,24 @@ customElements.define('qa-app', class extends HTMLElement {});
 
 /* ---- qa-sidebar (brand="…" sets the product name; default "AI QA Studio") ---- */
 customElements.define('qa-sidebar', class extends HTMLElement {
+  // Observe `active` so navigation re-renders the nav in place — the element (and
+  // its collapse state) survives instead of remounting.
+  static get observedAttributes() { return ['active']; }
+  attributeChangedCallback() { if (this.isConnected) this.renderNav(); }
   connectedCallback() {
-    const active = this.getAttribute('active') || 'projects';
     const brand = this.getAttribute('brand') || 'AI QA Studio';
     const user = this.getAttribute('user') || 'QA User';
     const role = this.getAttribute('role') || 'QA Engineer';
     const initials = user.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    const nav = [['stories','Stories'],['projects','Projects'],['plans','Test Plans'],['executions','Executions'],['settings','Settings']];
-    const ICONS = {
-      stories:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.5" y="2.5" width="9" height="11" rx="1.5"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>',
-      projects:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
-      plans:      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.5" y="2.5" width="9" height="11.5" rx="1.5"/><path d="M6 2.2h4v2.3H6z" fill="currentColor" stroke="none"/><path d="M5.75 8h4.5M5.75 10.7h2.8"/></svg>',
-      executions: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M5 3.5l7 4.5-7 4.5z"/></svg>',
-      settings:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 5h6M11.5 5H14M2 11h2.5M8 11h6"/><circle cx="9.5" cy="5" r="1.7"/><circle cx="6" cy="11" r="1.7"/></svg>'
-    };
-    const LINKS = { stories: 'stories.html' };  // nav targets that have a screen here (others stay inert until built)
     this.innerHTML =
       `<div class="brand"><span class="dot"></span> <span class="bname">${esc(brand)}</span></div>
-       <nav class="nav">${nav.map(([k,l]) => `<a class="${k===active?'active':''}"${LINKS[k] ? ` href="${LINKS[k]}"` : ''} title="${esc(l)}"><span class="ic">${ICONS[k]||''}</span> <span class="label">${l}</span></a>`).join('')}</nav>
+       <nav class="nav"></nav>
        <div class="spacer"></div>
        <div class="userchip"><span class="avatar">${esc(initials)}</span>
          <div class="uinfo"><div style="font-weight:600">${esc(user)}</div>
          <div class="qa-muted" style="font-size:.6875rem">${esc(role)}</div></div></div>
        <div class="railtoggle"><button class="rt" type="button"></button></div>`;
+    this.renderNav();
     // collapsible (IDE-style icon rail); bottom toggle indicates open/close
     const rt = this.querySelector('.rt');
     const sync = () => { const c = this.classList.contains('collapsed'); rt.textContent = c ? '»' : '«'; rt.title = c ? 'Expand sidebar' : 'Collapse sidebar'; };
@@ -87,6 +82,31 @@ customElements.define('qa-sidebar', class extends HTMLElement {
     sync();
     window.addEventListener('resize', responsive);
     rt.onclick = () => { pinned = true; this.classList.toggle('collapsed'); sync(); };
+  }
+  // Projects is the primary entity; its screens (Stories / Test Plans /
+  // Executions) nest under it and appear only inside a project — i.e. when
+  // `active` is one of them. On the repo list (active="projects") the nav stays
+  // flat, so it never shows sub-items that point nowhere yet.
+  renderNav() {
+    const nav = this.querySelector('.nav');
+    if (!nav) return;
+    const active = this.getAttribute('active') || 'projects';
+    const LABELS = { projects:'Projects', stories:'Stories', plans:'Test Plans', executions:'Executions', settings:'Settings' };
+    const CHILDREN = ['stories','plans','executions'];
+    const inProject = CHILDREN.includes(active);
+    const ICONS = {
+      stories:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.5" y="2.5" width="9" height="11" rx="1.5"/><path d="M6 6h4M6 8.5h4M6 11h2.5"/></svg>',
+      projects:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
+      plans:      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3.5" y="2.5" width="9" height="11.5" rx="1.5"/><path d="M6 2.2h4v2.3H6z" fill="currentColor" stroke="none"/><path d="M5.75 8h4.5M5.75 10.7h2.8"/></svg>',
+      executions: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M5 3.5l7 4.5-7 4.5z"/></svg>',
+      settings:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 5h6M11.5 5H14M2 11h2.5M8 11h6"/><circle cx="9.5" cy="5" r="1.7"/><circle cx="6" cy="11" r="1.7"/></svg>'
+    };
+    const LINKS = { projects: 'projects.html', stories: 'stories.html' };  // built screens; others inert until they exist
+    const item = (k, cls) => `<a class="${cls}"${LINKS[k] ? ` href="${LINKS[k]}"` : ''} title="${esc(LABELS[k])}"><span class="ic">${ICONS[k]||''}</span> <span class="label">${esc(LABELS[k])}</span></a>`;
+    nav.innerHTML =
+      item('projects', active === 'projects' ? 'active' : (inProject ? 'ancestor' : '')) +
+      (inProject ? `<div class="subnav">${CHILDREN.map(k => item(k, 'sub' + (k === active ? ' active' : ''))).join('')}</div>` : '') +
+      item('settings', active === 'settings' ? 'active' : '');
   }
 });
 

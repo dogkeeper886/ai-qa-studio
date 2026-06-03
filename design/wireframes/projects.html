@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI QA Studio — Projects</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<script defer src="components.js"></script>
+<style>
+ /* screen-local only — shared chrome comes from components.css */
+ /* projects table column ratios (chrome is shared; ratios stay per-screen) */
+ .projects-grid{grid-template-columns:1fr 8rem}
+ .trow .pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+ .trow:hover .read{color:var(--fg)}
+ .trow .read.muted{color:var(--muted)}   /* a repo with no stories yet — inert affordance */
+</style>
+</head>
+<body class="theme-light">
+<qa-app>
+  <qa-sidebar active="projects"></qa-sidebar>
+  <main>
+    <qa-topbar crumb="AI QA Studio / Projects"></qa-topbar>
+    <div class="qa-content">
+      <h1 class="pagehead">Projects</h1>
+      <p class="pagesub">The repos in your workbench, read straight from <code>active/</code> — the source of truth. Open one to work on its stories, plans, and executions.</p>
+
+      <!-- Live-data states (the list is read from the hub): default shows the
+           rows; ?state=loading|empty|error swaps in the matching .qa-empty cell. -->
+      <div class="table" id="projects-table">
+        <div class="thead projects-grid"><div>Repo</div><div></div></div>
+        <div class="trow projects-grid" data-project="checkout-service">
+          <div class="pname">checkout-service</div>
+          <div class="read">Open →</div>
+        </div>
+        <div class="trow projects-grid" data-project="mobile-app">
+          <div class="pname">mobile-app</div>
+          <div class="read">Open →</div>
+        </div>
+        <div class="trow projects-grid" data-project="infra-scripts">
+          <div class="pname">infra-scripts</div>
+          <div class="read muted">No stories</div>
+        </div>
+      </div>
+      <div class="table" id="projects-state" hidden>
+        <div class="qa-empty qa-empty-loading" data-state="loading"><div class="qa-empty-icon">…</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">Loading projects…</div></div></div>
+        <div class="qa-empty" data-state="empty" hidden><div class="qa-empty-icon">∅</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">No projects yet</div>
+            <div class="qa-empty-sub">Drop a repo under <code>active/</code> and it appears here.</div></div></div>
+        <div class="qa-empty qa-empty-error" data-state="error" hidden><div class="qa-empty-icon">!</div>
+          <div class="qa-empty-body"><div class="qa-empty-title">Couldn't reach the hub</div>
+            <div class="qa-empty-sub">Is it running? <code>npm run serve:fake</code> in <code>code/hub/</code>.</div></div></div>
+      </div>
+    </div>
+  </main>
+  <qa-md-viewer></qa-md-viewer>
+</qa-app>
+<script>
+ document.addEventListener('DOMContentLoaded', () => {
+   // Opening a repo navigates to its stories (the project's first sub-screen).
+   document.querySelectorAll('.trow[data-project]').forEach(row => {
+     const muted = row.querySelector('.read.muted');
+     row.onclick = () => { if (!muted) location.href = 'stories.html'; };
+   });
+   // ?state=loading|empty|error — swap the rows for the matching live-data cell.
+   const state = new URLSearchParams(location.search).get('state');
+   if (state) {
+     document.getElementById('projects-table').hidden = true;
+     document.getElementById('projects-state').hidden = false;
+     document.querySelectorAll('#projects-state [data-state]').forEach(c => { c.hidden = c.getAttribute('data-state') !== state; });
+   }
+ });
+</script>
+</body>
+</html>

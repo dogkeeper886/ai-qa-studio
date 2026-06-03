@@ -14,7 +14,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
@@ -22,16 +22,70 @@ import { WebSocketServer, type WebSocket } from "ws";
 const here = dirname(fileURLToPath(import.meta.url));
 /** code/hub/src -> repo root. The agent runs here so .claude/ skills load. */
 export const repoRoot = resolve(here, "../../..");
-const storiesDir = resolve(repoRoot, "docs/stories");
+/** The workbench: each subfolder is a repo the studio works on (STORY-004). */
+const activeDir = resolve(repoRoot, "active");
 
-// --- docs/stories: the markdown source of truth ----------------------------
+// --- active/<repo>: the workbench of repos ----------------------------------
+
+/** A repo name is a single path segment of safe chars (no slashes). This — plus
+ *  storiesDirOf's explicit `.`/`..` rejection — is the path-scope guard: it keeps
+ *  a resolved name from addressing anything but one entry directly under active/. */
+const REPO_NAME_RE = /^[A-Za-z0-9._-]+$/;
+
+export interface RepoListing {
+  /** Folder name under active/ — the id used in /api/repos/:repo/… */
+  name: string;
+  /** Whether the repo has a docs/stories/ to show. */
+  hasStories: boolean;
+}
+
+/** List the repos under active/ (directories only; skips .gitkeep and files). */
+export async function listRepos(): Promise<RepoListing[]> {
+  let entries: import("node:fs").Dirent[];
+  try {
+    entries = await readdir(activeDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const dirs = entries.filter((e) => e.isDirectory() && REPO_NAME_RE.test(e.name));
+  const out = await Promise.all(
+    dirs.map(async (e): Promise<RepoListing> => {
+      let hasStories = false;
+      try {
+        const st = await stat(resolve(activeDir, e.name, "docs/stories"));
+        hasStories = st.isDirectory();
+      } catch {
+        /* no docs/stories — still a repo, just nothing to show yet */
+      }
+      return { name: e.name, hasStories };
+    }),
+  );
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
+/** Resolve a repo's docs/stories dir, or null if the name is unsafe or missing.
+ *  The shape guard rejects slashes and the `.`/`..` traversal segments, so the
+ *  name can only address one entry under active/; a single stat then confirms it
+ *  exists — no need to list the whole workbench on every request. */
+async function storiesDirOf(repo: string): Promise<string | null> {
+  if (!REPO_NAME_RE.test(repo) || repo === "." || repo === "..") return null;
+  const dir = resolve(activeDir, repo, "docs/stories");
+  try {
+    return (await stat(dir)).isDirectory() ? dir : null;
+  } catch {
+    return null; // repo or its docs/stories doesn't exist
+  }
+}
+
+// --- docs/stories: the markdown source of truth (per repo) ------------------
 
 const STORY_FILE_RE = /^(STORY-\d+)[^/]*\.md$/;
 
 export interface StoryListing {
-  /** STORY-NNN — the id used in /api/stories/:id. */
+  /** STORY-NNN — the id used in /api/repos/:repo/stories/:id. */
   id: string;
-  /** File name under docs/stories/. */
+  /** File name under the repo's docs/stories/. */
   file: string;
   /** First-heading title, minus the "STORY-NNN: " prefix. */
   title: string;
@@ -44,8 +98,8 @@ function titleOf(markdown: string, id: string): string {
   return h1?.replace(/^STORY-\d+:\s*/, "").trim() || id;
 }
 
-/** List the real stories (STORY-NNN*.md), skipping README and the like. */
-export async function listStories(): Promise<StoryListing[]> {
+/** List a repo's stories (STORY-NNN*.md), skipping README and the like. */
+export async function listStories(storiesDir: string): Promise<StoryListing[]> {
   let files: string[];
   try {
     files = await readdir(storiesDir);
@@ -63,13 +117,14 @@ export async function listStories(): Promise<StoryListing[]> {
       }
     }),
   );
-  out.sort((a, b) => a.id.localeCompare(b.id));
+  out.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })); // STORY-2 before STORY-10
   return out;
 }
 
-/** Read one story's raw markdown by id. Reads only the target file (no listing
- *  pass). Returns null if unknown or the id escapes the shape guard. */
-export async function readStory(id: string): Promise<string | null> {
+/** Read one story's raw markdown by id from a repo's stories dir. Reads only the
+ *  target file (no listing pass). Returns null if unknown or the id escapes the
+ *  shape guard. */
+export async function readStory(storiesDir: string, id: string): Promise<string | null> {
   if (!/^STORY-\d+$/.test(id)) return null; // id-shape guard = path-scope safety
   let files: string[];
   try {
@@ -227,13 +282,22 @@ export function startHub(opts: HubOptions = {}) {
     const url = new URL(req.url ?? "/", "http://localhost");
     const send = (code: number, type: string, body: string) => { res.writeHead(code, { "Content-Type": type }); res.end(body); };
 
-    if (url.pathname === "/api/stories") {
-      send(200, CONTENT_TYPES.json, JSON.stringify({ stories: await listStories() }));
+    if (url.pathname === "/api/repos") {
+      send(200, CONTENT_TYPES.json, JSON.stringify({ repos: await listRepos() }));
       return;
     }
-    const m = url.pathname.match(/^\/api\/stories\/([^/]+)$/);
-    if (m) {
-      const md = await readStory(decodeURIComponent(m[1]));
+    const list = url.pathname.match(/^\/api\/repos\/([^/]+)\/stories$/);
+    if (list) {
+      const dir = await storiesDirOf(decodeURIComponent(list[1]));
+      if (dir === null) { send(404, CONTENT_TYPES.json, JSON.stringify({ error: "repo not found" })); return; }
+      send(200, CONTENT_TYPES.json, JSON.stringify({ stories: await listStories(dir) }));
+      return;
+    }
+    const one = url.pathname.match(/^\/api\/repos\/([^/]+)\/stories\/([^/]+)$/);
+    if (one) {
+      const dir = await storiesDirOf(decodeURIComponent(one[1]));
+      if (dir === null) { send(404, CONTENT_TYPES.json, JSON.stringify({ error: "repo not found" })); return; }
+      const md = await readStory(dir, decodeURIComponent(one[2]));
       if (md === null) { send(404, CONTENT_TYPES.json, JSON.stringify({ error: "story not found" })); return; }
       send(200, CONTENT_TYPES.md, md);
       return;

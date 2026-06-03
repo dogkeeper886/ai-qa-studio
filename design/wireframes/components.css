@@ -31,6 +31,15 @@ qa-sidebar .nav a{display:flex;align-items:center;gap:.625rem;padding:.5rem .625
 qa-sidebar .nav a.active{background:var(--bg);color:var(--fg);font-weight:600}
 qa-sidebar .nav a .ic{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;opacity:.85}
 qa-sidebar .nav a .ic svg{width:16px;height:16px;display:block}
+/* in-project nesting: parent reads as the current section (no fill), the active
+   child is the focal item (.active fill above); a left guide line + indent
+   carry the hierarchy. Children are quieter (smaller, lighter icons). */
+qa-sidebar .nav a.ancestor{color:var(--fg);font-weight:600}
+qa-sidebar .subnav{display:flex;flex-direction:column;gap:.125rem;margin:.125rem 0 .125rem .75rem;padding-left:.6rem;border-left:1px solid var(--border)}
+qa-sidebar .subnav a.sub{font-size:.8125rem;padding:.4rem .55rem}
+qa-sidebar .subnav a.sub .ic{width:14px;height:14px;opacity:.7}
+qa-sidebar .subnav a.sub .ic svg{width:14px;height:14px}
+qa-sidebar.collapsed .subnav{margin-left:0;padding-left:0;border-left:none}
 qa-sidebar .spacer{flex:1}
 qa-sidebar .userchip{display:flex;align-items:center;gap:.5rem;padding:.5rem;border-radius:8px}
 qa-sidebar .avatar{width:28px;height:28px;border-radius:999px;background:var(--accent);color:var(--on-accent);
@@ -288,6 +297,9 @@ qa-md-viewer .md blockquote{border-left:3px solid var(--border);padding:.2rem 0 
 qa-md-viewer .md table{border-collapse:collapse;width:100%;margin:.6rem 0;font-size:.8125rem}
 qa-md-viewer .md th,qa-md-viewer .md td{border:1px solid var(--border);padding:.4rem .6rem;text-align:left}
 qa-md-viewer .md th{background:var(--bg);font-weight:700}
+qa-md-viewer .md code{font-family:ui-monospace,Menlo,monospace;font-size:.85em;background:var(--bg);border-radius:4px;padding:.1rem .3rem}
+qa-md-viewer .md pre{background:var(--bg);box-shadow:var(--inset);border-radius:8px;padding:.8rem 1rem;overflow:auto;margin:.6rem 0}
+qa-md-viewer .md pre code{background:none;padding:0;font-size:.78rem;line-height:1.55}
 qa-md-viewer .mdsrc{display:none;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;line-height:1.55;color:var(--fg);background:var(--bg);box-shadow:var(--inset);border-radius:8px;padding:1rem;margin:0}
 /* React port: .mdwin window class is replaced by .qa-dialog-win + inner
    .md-viewer; toggle the rendered/source view via that inner class. The
