@@ -94,10 +94,15 @@ wss.on("connection", (ws) => {
   // adapter diagnostics -> bridge stderr (not the protocol channel).
   child.stderr.on("data", (chunk: Buffer) => process.stderr.write(`[adapter] ${chunk}`));
 
-  // WS -> agent stdin, verbatim + newline framing.
+  // WS -> agent stdin. Forward each newline-delimited frame as-is (mirror the
+  // stdout split). Never strip interior newlines — that would merge or mangle
+  // frames rather than frame them, breaking the byte-for-byte guarantee.
   ws.on("message", (data) => {
-    const frame = typeof data === "string" ? data : data.toString("utf8");
-    if (child.stdin.writable) child.stdin.write(frame.replace(/\n/g, "") + "\n");
+    if (!child.stdin.writable) return;
+    const text = typeof data === "string" ? data : data.toString("utf8");
+    for (const line of text.split("\n")) {
+      if (line.trim()) child.stdin.write(line + "\n");
+    }
   });
 
   const shutdown = (why: string) => {
@@ -111,7 +116,16 @@ wss.on("connection", (ws) => {
     process.stderr.write(`[bridge] adapter exited code=${code} signal=${signal}\n`);
     if (ws.readyState === ws.OPEN) ws.close(1000, "agent exited");
   });
+  // A spawn failure (bad path, EMFILE under the uncapped one-process-per-socket
+  // model) emits 'error'; without a listener it would throw and crash the whole
+  // bridge, dropping every other connected session. Confine it to this socket.
+  child.on("error", (e) => {
+    process.stderr.write(`[bridge] adapter spawn error: ${e.message}\n`);
+    if (ws.readyState === ws.OPEN) ws.close(1011, "adapter spawn error");
+  });
 });
+
+server.on("error", (e) => process.stderr.write(`[bridge] server error: ${e.message}\n`));
 
 server.listen(port, () => {
   process.stderr.write(`[bridge] http+ws on http://localhost:${port}  (adapter: ${adapterEntry})\n`);

@@ -19,9 +19,16 @@ cd "$ROOT"
 rm -rf .claude/skills .claude/commands
 mkdir -p .claude/skills .claude/commands
 
+# A name collision must warn and skip, not abort: under `set -e` a failing
+# `ln -s` would kill the script mid-build and leave the second loop unrun (a
+# silently broken run-surface). Guarding keeps the rest of the surface intact.
 n_skills=0
 while IFS= read -r skilldir; do
   name=$(basename "$skilldir")
+  if [ -e ".claude/skills/$name" ]; then
+    echo "warn: skill name collision '$name' — skipping $skilldir" >&2
+    continue
+  fi
   ln -s "$(realpath "$skilldir")" ".claude/skills/$name"
   n_skills=$((n_skills + 1))
 done < <(find workflow/skills -name SKILL.md -printf '%h\n' | sort -u)
@@ -30,6 +37,10 @@ n_cmds=0
 while IFS= read -r f; do
   rel=${f#workflow/commands/}   # e.g. qa/jira/jr-trace.md
   ns=${rel#*/}                  # jira/jr-trace.md  (strip the dev|qa|shared group)
+  if [ -e ".claude/commands/$ns" ]; then
+    echo "warn: command collision '$ns' — skipping $f" >&2
+    continue
+  fi
   mkdir -p ".claude/commands/$(dirname "$ns")"
   ln -s "$(realpath "$f")" ".claude/commands/$ns"
   n_cmds=$((n_cmds + 1))

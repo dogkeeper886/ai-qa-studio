@@ -47,6 +47,9 @@ const ws = new WebSocket(`ws://${location.host}/ws`);
 let nextId = 1;
 const pending = new Map();            // id -> {resolve, reject}
 let sessionId = null;
+let initialized = false;       // tracked apart from sessionId: initialize is once
+                               // per connection, so a failed session/new must not
+                               // re-send it on the next Run (that would wedge).
 const toolEls = new Map();            // toolCallId -> DOM node
 
 function logFrame(dir, obj) {
@@ -150,7 +153,6 @@ function handleNotification(msg) {
 let curAgentEl = null, curThoughtEl = null;
 function appendChunk(kind, content) {
   if (!content || content.type !== "text") return;
-  const ref = kind === "agent" ? "curAgentEl" : "curThoughtEl";
   let el = kind === "agent" ? curAgentEl : curThoughtEl;
   if (!el) {
     el = addMsg(kind === "agent" ? "agent" : "thought", "");
@@ -188,12 +190,15 @@ document.getElementById("run").onclick = async () => {
   const text = document.getElementById("prompt").value;
   curAgentEl = curThoughtEl = null;
   try {
-    if (!sessionId) {
+    if (!initialized) {
       await sendRequest("initialize", {
         protocolVersion: 1,
         clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false },
         clientInfo: { name: "aiqa-acp-poc-web", version: "0.0.1" },
       });
+      initialized = true;
+    }
+    if (!sessionId) {
       const { cwd } = await (await fetch("/cwd")).json();
       const ns = await sendRequest("session/new", { cwd, mcpServers: [] });
       sessionId = ns.sessionId;
