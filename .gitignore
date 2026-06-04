@@ -12,10 +12,9 @@ active/*
 completed/*
 !completed/.gitkeep
 
-# Local run-surface — commands/skills are linked (or copied) here on demand from
-# workflow/ (the committed source of truth). Never committed; nothing to keep in sync.
-.claude/commands/
-.claude/skills/
+# Note: .claude/commands/ and .claude/skills/ ARE committed — they are the single
+# workflow surface the backend loads directly (no separate source-of-truth dir, no
+# build step). Only the local settings file above is ignored under .claude/.
 
 # Playwright MCP artifacts (snapshots, console logs, screenshots) — local only
 .playwright-mcp/
