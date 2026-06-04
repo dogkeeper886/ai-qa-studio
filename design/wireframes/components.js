@@ -21,6 +21,12 @@
 
 const esc = s => (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
+/* Idempotent custom-element registration. A custom element can only be defined
+   once per name; this module is imported as a side effect, so any re-evaluation
+   (a bundler hot-reload, a double import) would otherwise throw and wedge the
+   page. Skip names already registered so re-running the module is harmless. */
+const defineEl = (name, ctor) => { if (!customElements.get(name)) customElements.define(name, ctor); };
+
 /* ---- theme ---- */
 function applyTheme() {
   const b = document.body;
@@ -47,10 +53,10 @@ function syncAssistantBtn() {
 function toggleAssistant() { assistantUserSet = true; document.body.classList.toggle('assistant-collapsed'); syncAssistantBtn(); }
 
 /* ---- qa-app: just a layout host (styled in CSS) ---- */
-customElements.define('qa-app', class extends HTMLElement {});
+defineEl('qa-app', class extends HTMLElement {});
 
 /* ---- qa-sidebar (brand="…" sets the product name; default "AI QA Studio") ---- */
-customElements.define('qa-sidebar', class extends HTMLElement {
+defineEl('qa-sidebar', class extends HTMLElement {
   // Observe `active` so navigation re-renders the nav in place — the element (and
   // its collapse state) survives instead of remounting.
   static get observedAttributes() { return ['active']; }
@@ -111,7 +117,7 @@ customElements.define('qa-sidebar', class extends HTMLElement {
 });
 
 /* ---- qa-topbar (crumb="A / B / C" bolds the last segment) ---- */
-customElements.define('qa-topbar', class extends HTMLElement {
+defineEl('qa-topbar', class extends HTMLElement {
   connectedCallback() {
     // crumb="Label | Label|url / Label" — last segment is the current page (bold); ancestors with a url link
     const parts = (this.getAttribute('crumb') || '').split('/').map(s => s.trim()).filter(Boolean);
@@ -130,7 +136,7 @@ customElements.define('qa-topbar', class extends HTMLElement {
 });
 
 /* ---- qa-rail (step="N" = current 1-indexed; add `inprogress` for ● on current) ---- */
-customElements.define('qa-rail', class extends HTMLElement {
+defineEl('qa-rail', class extends HTMLElement {
   connectedCallback() {
     const cur = parseInt(this.getAttribute('step') || '1', 10);
     const inprog = this.hasAttribute('inprogress');
@@ -150,7 +156,7 @@ customElements.define('qa-rail', class extends HTMLElement {
 
 /* ---- qa-drawer (assistant). Collapsible via the ✕ + topbar ✦ Assistant; responsive.
        `pinned` = always-on (no ✕, no auto-hide); `closed` = start hidden. ---- */
-customElements.define('qa-drawer', class extends HTMLElement {
+defineEl('qa-drawer', class extends HTMLElement {
   connectedCallback() {
     const body = this.innerHTML;
     const title = this.getAttribute('title') || '✦ Assistant';
@@ -188,7 +194,7 @@ customElements.define('qa-drawer', class extends HTMLElement {
 });
 
 /* ---- qa-field (the standout input; add `multiline` for a textarea) ---- */
-customElements.define('qa-field', class extends HTMLElement {
+defineEl('qa-field', class extends HTMLElement {
   connectedCallback() {
     const label = this.getAttribute('label');
     const ph = esc(this.getAttribute('placeholder') || '');
@@ -202,7 +208,7 @@ customElements.define('qa-field', class extends HTMLElement {
 });
 
 /* ---- qa-btn (variant: primary|ghost|sm|sm-primary) ---- */
-customElements.define('qa-btn', class extends HTMLElement {
+defineEl('qa-btn', class extends HTMLElement {
   connectedCallback() {
     const text = this.textContent.trim();
     const cls = { primary:'qa-btn', ghost:'qa-btn ghost', sm:'qa-btn sm', 'sm-primary':'qa-btn sm primary' }
@@ -212,7 +218,7 @@ customElements.define('qa-btn', class extends HTMLElement {
 });
 
 /* ---- qa-toggle (add `on` for the active state) ---- */
-customElements.define('qa-toggle', class extends HTMLElement {
+defineEl('qa-toggle', class extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `<span class="switch${this.hasAttribute('on') ? '' : ' off'}"><span class="knob"></span></span>`;
     this.querySelector('.switch').onclick = e => e.currentTarget.classList.toggle('off');
@@ -220,7 +226,7 @@ customElements.define('qa-toggle', class extends HTMLElement {
 });
 
 /* ---- qa-gate-card (drawer verdict card; verdict=pass|fail|blocked) ---- */
-customElements.define('qa-gate-card', class extends HTMLElement {
+defineEl('qa-gate-card', class extends HTMLElement {
   connectedCallback() {
     const v = (this.getAttribute('verdict') || 'pass').toLowerCase();
     const title = this.getAttribute('title') || 'GATE 1 — Plan completeness';
@@ -244,7 +250,7 @@ customElements.define('qa-gate-card', class extends HTMLElement {
          attention    — paused/needs-you variant (accent border + ⏸)
          placeholder  — the instruction field's placeholder
          approve-href — navigate the primary button (wireframe links) ---- */
-customElements.define('qa-decision', class extends HTMLElement {
+defineEl('qa-decision', class extends HTMLElement {
   connectedCallback() {
     const title = this.getAttribute('title') || 'Your call';
     const rec = this.getAttribute('recommendation');
@@ -271,7 +277,7 @@ customElements.define('qa-decision', class extends HTMLElement {
 });
 
 /* ---- qa-md-viewer (markdown document modal; open via window.qaDoc.open({name,rendered,source})) ---- */
-customElements.define('qa-md-viewer', class extends HTMLElement {
+defineEl('qa-md-viewer', class extends HTMLElement {
   connectedCallback() {
     this.innerHTML =
       `<div class="mdback"><div class="mdwin">
@@ -316,7 +322,7 @@ customElements.define('qa-md-viewer', class extends HTMLElement {
         body (input / result / diff) is inset and shown on expand.
         name=title (may contain <code>) · kind=execute|edit|read|search|skill|mcp
         status=queued|executing|completed|failed · `open` starts expanded. ---- */
-customElements.define('qa-tool', class extends HTMLElement {
+defineEl('qa-tool', class extends HTMLElement {
   connectedCallback() {
     const detail = this.innerHTML.trim();
     const name = this.getAttribute('name') || 'Tool';      // trusted wireframe markup (may include <code>)
@@ -341,7 +347,7 @@ customElements.define('qa-tool', class extends HTMLElement {
 
 /* ---- qa-plan: the agent's task list (ACP `plan`). Children are entries; each
         child's data-s = done|doing|todo sets the marker. ---- */
-customElements.define('qa-plan', class extends HTMLElement {
+defineEl('qa-plan', class extends HTMLElement {
   connectedCallback() {
     const rows = [...this.children].map(c => ({ s: c.getAttribute('data-s') || 'todo', t: c.innerHTML }));
     this.innerHTML =
@@ -352,7 +358,7 @@ customElements.define('qa-plan', class extends HTMLElement {
 
 /* ---- qa-turn: a quiet boundary line between turns (ACP result / stop_reason) —
         a hairline + a muted label, NOT a card. outcome=end_turn|refusal|error|cancelled ---- */
-customElements.define('qa-turn', class extends HTMLElement {
+defineEl('qa-turn', class extends HTMLElement {
   connectedCallback() {
     const outcome = (this.getAttribute('outcome') || 'end_turn').toLowerCase();
     const OUT = { end_turn:['✓','Turn complete'], refusal:['⦸','Refused'], error:['!','Turn errored'], cancelled:['■','Cancelled'] };
@@ -373,7 +379,7 @@ customElements.define('qa-turn', class extends HTMLElement {
         approve / send-back on something it produced. Marked with the accent so it
         reads as "your move." label=eyebrow · q=the ask (may contain <code>) ·
         options="Label|desc, Label|desc" (first is primary). ---- */
-customElements.define('qa-ask', class extends HTMLElement {
+defineEl('qa-ask', class extends HTMLElement {
   connectedCallback() {
     const label = this.getAttribute('label') || 'Needs you';
     const q = this.getAttribute('q') || '';                 // trusted wireframe markup
