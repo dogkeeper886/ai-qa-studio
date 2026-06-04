@@ -18,3 +18,6 @@ completed/*
 
 # Playwright MCP artifacts (snapshots, console logs, screenshots) — local only
 .playwright-mcp/
+
+# Studio run state — pidfiles + logs written by `make up` (the front door)
+.run/
