@@ -133,3 +133,9 @@ See `/tl-format` for HTML formatting rules (preconditions, step actions, expecte
 - If local file not found, ask user to provide correct path
 - If preconditions field is returned as empty string from create operation, immediately update with correct preconditions
 - If API returns error, report the error and suggest resolution
+
+## Paired Review
+
+A sync is a producer — pair it with its review. After syncing, run `/tl-review-sync` to
+verify what landed in TestLink (coverage, content fidelity, formatting per `/tl-format`,
+classification, plan assignment) before relying on it for execution.

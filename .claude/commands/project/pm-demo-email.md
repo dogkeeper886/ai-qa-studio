@@ -210,3 +210,9 @@ Use simple phrases that describe what viewers will see:
 - "The problem - [brief description]"
 - "The solution - [brief description]"
 - "Examples - [what's demonstrated]"
+
+## Paired Review
+
+The share email is a text deliverable for an outside reader — pair it with its review.
+Before sending, run `reviewing-phrasing` on it (reader, content, tone, purpose, use) and
+apply the findings.
