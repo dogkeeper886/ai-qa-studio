@@ -235,7 +235,7 @@ function attachFakeAgent(ws: WebSocket): void {
         { content: "Write the sections", status: "pending", priority: "medium" },
       ] });
       await wait(250);
-      note(sessionId, { sessionUpdate: "tool_call", toolCallId: "t1", title: "ls docs/stories", kind: "execute", status: "completed", content: [{ type: "content", content: { type: "text", text: "STORY-001.md  STORY-002.md  STORY-003.md" } }] });
+      note(sessionId, { sessionUpdate: "tool_call", toolCallId: "t1", title: "`ls docs/stories`", kind: "execute", status: "completed", rawInput: { command: "ls docs/stories" }, content: [{ type: "content", content: { type: "text", text: "STORY-001.md  STORY-002.md  STORY-003.md" } }] });
       await wait(250);
       // pause for a permission decision — the frontend renders the question box
       send({ jsonrpc: "2.0", id: PERMISSION_ID, method: "session/request_permission", params: { sessionId, toolCall: { toolCallId: "t2", title: "Write test_plan/00_overview.md" }, options: [
@@ -282,6 +282,12 @@ export function startHub(opts: HubOptions = {}) {
     const url = new URL(req.url ?? "/", "http://localhost");
     const send = (code: number, type: string, body: string) => { res.writeHead(code, { "Content-Type": type }); res.end(body); };
 
+    if (url.pathname === "/api/cwd") {
+      // The agent session's working directory. The studio root for now; scoping
+      // it to the active repo is STORY-004 #19.
+      send(200, CONTENT_TYPES.json, JSON.stringify({ cwd: repoRoot }));
+      return;
+    }
     if (url.pathname === "/api/repos") {
       send(200, CONTENT_TYPES.json, JSON.stringify({ repos: await listRepos() }));
       return;

@@ -14,8 +14,12 @@ declare module "react" {
       "qa-app": CustomEl;
       "qa-sidebar": CustomEl<{ active?: string; brand?: string }>;
       "qa-topbar": CustomEl<{ crumb?: string; "no-assistant"?: string }>;
-      "qa-drawer": CustomEl<{ title?: string; placeholder?: string; pinned?: string; closed?: string }>;
+      "qa-drawer": CustomEl<{ title?: string; placeholder?: string; pinned?: string; closed?: string; commands?: string; context?: string }>;
       "qa-md-viewer": CustomEl;
+      "qa-tool": CustomEl<{ name?: string; kind?: string; status?: string; open?: boolean }>;
+      "qa-plan": CustomEl;
+      "qa-ask": CustomEl<{ label?: string; q?: string; options?: string; answered?: string }>;
+      "qa-turn": CustomEl<{ outcome?: string; turns?: string; cost?: string; denials?: string }>;
     }
   }
 }

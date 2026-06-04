@@ -9,9 +9,6 @@
 <style>
  /* screen-local only — one-off chat content; everything shared comes from components.css. Tokens only. */
  .stories-grid{grid-template-columns:7rem 1fr 6rem}   /* ratio per-screen; .sid/.read cells are shared (components.css) */
- /* an "open this file" link inside a tool result */
- .openfile{display:inline-block;margin-top:.35rem;color:var(--accent);text-decoration:underline;cursor:pointer;
-   font-family:inherit;font-size:.72rem}
  /* empty-session state (no thread yet) */
  #thread-empty:not([hidden]){flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
    text-align:center;gap:.6rem;padding:1.5rem .5rem;color:var(--muted)}
@@ -40,7 +37,9 @@
     </div>
   </main>
 
-  <qa-drawer title="✦ Assistant" placeholder="Message the agent — ⏎ to send" style="width:440px">
+  <qa-drawer title="✦ Assistant" placeholder="Message the agent — ⏎ to send" style="width:440px"
+    commands='[{"name":"jr-trace","description":"Trace a ticket into a workspace"},{"name":"tw-plan-init","description":"Start a test plan"}]'
+    context='["STORY-001.md"]'>
     <!-- EMPTY: a fresh session (?state=empty) -->
     <div id="thread-empty" hidden>
       <div class="ce-glyph">✦</div>
@@ -53,58 +52,37 @@
       </div>
     </div>
 
-    <!-- ACTIVE (default): a session mid-turn, paused on a permission -->
+    <!-- ACTIVE (default): the real fake-agent turn, paused on a permission.
+         Mirrors the hub's session/update sequence in code/hub/src/server.ts:
+         available_commands → agent text → plan → tool_call(ls) → request_permission. -->
     <div id="thread-active">
-      <qa-turn outcome="end_turn" turns="3" cost="$0.12"></qa-turn>
-
+      <qa-turn outcome="end_turn" turns="2" cost="$0.04"></qa-turn>
       <div class="msg user">Plan the tests for STORY-001 and draft the test plan.</div>
-      <div class="act">▸ loaded planning-tests · detected Type B (feature)</div>
+      <div class="act">▸ 2 commands available · jr-trace · tw-plan-init</div>
+
+      <div class="msg bot">Planning the tests for STORY-001…</div>
 
       <qa-plan>
-        <div data-s="done">Read the story &amp; baseline</div>
+        <div data-s="done">Read the story</div>
         <div data-s="doing">Draft the test-plan overview</div>
-        <div data-s="todo">Write the scenario sections (TS-01…)</div>
-        <div data-s="todo">Build the traceability matrix</div>
+        <div data-s="todo">Write the scenario sections</div>
       </qa-plan>
 
-      <qa-tool kind="skill" status="completed" name="Skill · planning-tests"></qa-tool>
-      <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
-<span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
-      <qa-tool kind="edit" status="failed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="err">⚠ File has not been read yet. Read it first before writing.</span></qa-tool>
-      <qa-tool kind="edit" status="completed" name="Write · <code>test_plan/00_overview.md</code>" open><span class="add">+ # Test Plan — See the stories in the studio</span>
-<span class="add">+ Scope · Scenarios (TS-01…12) · Traceability · Risks</span>
-<a class="openfile" data-open="plan">⤢ Open test_plan/00_overview.md</a></qa-tool>
+      <qa-tool kind="execute" status="completed" name="<code>ls docs/stories</code>" open>STORY-001.md  STORY-002.md  STORY-003.md</qa-tool>
 
-      <qa-ask label="Review · the plan" answered="Approved — continue"
-        q="Approve <code>test_plan/00_overview.md</code> so the agent can write the section files?"></qa-ask>
-
-      <div class="msg bot">On it — writing the first scenario section now<span class="qa-caret"></span></div>
-
-      <qa-tool kind="edit" status="queued" name="Write · <code>test_plan/sections/TS-01.md</code>" open><span class="add">+ # TS-01 · Render the stories list</span>
-<span class="add">+ Given docs/stories has 3 files · When the studio opens · Then all 3 appear</span></qa-tool>
-
-      <qa-ask label="Permission · canUseTool"
-        q="Allow the agent to <code>Write test_plan/sections/TS-01.md</code>?"
-        options="Always allow|Approve Write for the rest of this session, Allow once|Just this one call, Reject|Deny and tell the agent why"></qa-ask>
+      <qa-ask label="Permission"
+        q="Allow the agent to <code>Write test_plan/00_overview.md</code>?"
+        options='[{"id":"allow_always","label":"Always allow","desc":"Approve Write for the rest of this session"},{"id":"allow","label":"Allow once","desc":"Just this one call"},{"id":"reject","label":"Reject","desc":"Deny and tell the agent why"}]'></qa-ask>
     </div>
   </qa-drawer>
 
-  <qa-md-viewer></qa-md-viewer>
 </qa-app>
 <script>
  // Wireframe wiring. The real panel renders this thread from the hub's ACP
- // session/update stream; here we demonstrate the states + the raw view + a preview.
- const PLAN = {
-   name: 'test_plan/00_overview.md',
-   rendered: `<h1>Test Plan — See the stories in the studio</h1>
-     <p><b>Scope.</b> The studio reads <code>docs/stories/*.md</code> and renders each story by ID and title.</p>
-     <h2>Sections</h2><ul><li>1 — Overview &amp; scope</li><li>2 — Scenarios (TS-01…TS-12)</li><li>3 — Traceability</li><li>4 — Risks</li></ul>`,
-   source: '# Test Plan — See the stories in the studio\n\n**Scope.** Reads `docs/stories/*.md` …\n\n## Sections\n1. Overview\n2. Scenarios (TS-01…TS-12)\n3. Traceability\n4. Risks\n'
- };
+ // session/update stream; here we demonstrate the states. (Artifact preview +
+ // its doc viewer are the deferred follow-up — the real fake-agent turn produces
+ // no artifact event yet.)
  document.addEventListener('DOMContentLoaded', () => {
-   // Open a produced file in the doc viewer.
-   document.querySelectorAll('.openfile[data-open="plan"]').forEach(a => a.onclick = () => qaDoc.open(PLAN));
-
    // ?state=empty → the fresh-session state.
    if (new URLSearchParams(location.search).get('state') === 'empty') {
      document.getElementById('thread-active').hidden = true;

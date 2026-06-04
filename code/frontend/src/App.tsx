@@ -5,8 +5,10 @@
 import "../../../design/wireframes/tokens.css";
 import "../../../design/wireframes/components.css";
 import "../../../design/wireframes/components.js"; // side effect: defines qa-* + window.qaDoc
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import MarkdownIt from "markdown-it";
+import { useAgent, type Attachment, type Option, type ThreadItem } from "./agent";
 
 // Real markdown renderer for the doc viewer. html:false escapes any raw HTML in
 // a story file (no script injection); the default preset gives GFM tables, and
@@ -177,28 +179,155 @@ function RepoStories({ repo, onBack }: { repo: string; onBack: () => void }) {
   );
 }
 
-/** The assistant drawer (the ✦ Assistant control opens it). qa-drawer is a
- *  light-DOM custom element that rewrites its own innerHTML, which conflicts
- *  with React children — so render it empty and fill its .dbody imperatively.
- *  The live agent thread is the next build (#13); this is the shell. */
+/** The assistant drawer wired to the live ACP loop. qa-drawer is a light-DOM
+ *  custom element that builds its own chrome — header, .dbody, and the composer
+ *  with its affordances (command picker, Add-context, chips). We let it build,
+ *  portal the React thread into .dbody, feed it the live commands + attachment
+ *  list (as JSON attributes), and answer its qa-attach / qa-detach events. */
 function Assistant() {
   const ref = useRef<HTMLElement>(null);
+  const { items, status, commands, sendPrompt, respondPermission } = useAgent();
+  const [body, setBody] = useState<HTMLElement | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const boxRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // The drawer renders its own picker + chips from these (JSON so a description or
+  // filename can hold any character — the comma-joined version shattered them).
+  // Memoised so streamed tokens (which re-render Assistant) don't re-stringify the
+  // ~80-command list every frame.
+  const commandsAttr = useMemo(() => JSON.stringify(commands), [commands]);
+  const contextAttr = useMemo(() => JSON.stringify(attachments.map((a) => a.name)), [attachments]);
+
+  // submit reads the live textarea + attachments; held in a ref so the listeners
+  // (wired once below) always see current state.
+  const submitRef = useRef(() => {});
+  submitRef.current = () => {
+    const box = boxRef.current;
+    const text = box?.value ?? "";
+    if (!text.trim() && attachments.length === 0) return;
+    void sendPrompt(text, attachments);
+    if (box) box.value = "";
+    setAttachments([]);
+  };
+
   useEffect(() => {
-    const dbody = ref.current?.querySelector(".dbody");
-    if (dbody && !dbody.childElementCount) {
-      dbody.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;
-             text-align:center;gap:.55rem;color:var(--muted);padding:1.5rem .5rem">
-          <div style="width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--bg);
-               display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent)">✦</div>
-          <div style="font-size:.95rem;font-weight:700;color:var(--fg)">Start a session</div>
-          <div style="font-size:.78rem;line-height:1.55;max-width:17rem">Ask the agent to plan tests, trace a ticket, or draft
-            cases. The live thread renders here once the chat panel lands (#13) — this is its shell, wired to the hub.</div>
-        </div>`;
-    }
+    const drawer = ref.current;
+    if (!drawer) return;
+    setBody(drawer.querySelector<HTMLElement>(".dbody"));
+    const box = drawer.querySelector<HTMLTextAreaElement>(".dbox");
+    boxRef.current = box;
+    const btn = drawer.querySelector<HTMLButtonElement>(".dsend");
+    const fire = () => submitRef.current();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); fire(); } };
+    // The drawer's file browser picked files (qa-attach) → read as text and hold
+    // as attachments; its chip ✕ (qa-detach) → drop one by index.
+    const onAttach = (e: Event) => {
+      const files = (e as CustomEvent).detail.files as FileList;
+      void Promise.all([...files].map(async (f) => ({ name: f.name, text: await f.text() })))
+        .then((read) => setAttachments((prev) => [...prev, ...read]));
+    };
+    const onDetach = (e: Event) => {
+      const i = (e as CustomEvent).detail.index as number;
+      setAttachments((prev) => prev.filter((_, j) => j !== i));
+    };
+    btn?.addEventListener("click", fire);
+    box?.addEventListener("keydown", onKey);
+    drawer.addEventListener("qa-attach", onAttach);
+    drawer.addEventListener("qa-detach", onDetach);
+    return () => {
+      btn?.removeEventListener("click", fire);
+      box?.removeEventListener("keydown", onKey);
+      drawer.removeEventListener("qa-attach", onAttach);
+      drawer.removeEventListener("qa-detach", onDetach);
+    };
   }, []);
-  return <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send"></qa-drawer>;
+
+  return (
+    <>
+      <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send" commands={commandsAttr} context={contextAttr}></qa-drawer>
+      {body && createPortal(<Thread items={items} status={status} respond={respondPermission} />, body)}
+    </>
+  );
 }
+
+/** The agent thread: each item rendered by the matching qa-* component. The qa-*
+ *  elements render once on connect, so items that mutate (tool status, plan,
+ *  permission answer) are keyed by their changing parts to remount cleanly;
+ *  the streaming text bubble is a plain div React updates in place. */
+function Thread({ items, status, respond }: { items: ThreadItem[]; status: string; respond: (id: string | number, o: Option) => void }) {
+  if (items.length === 0) {
+    if (status === "error" || status === "closed") return <ChatEmpty error />;
+    return <ChatEmpty />;
+  }
+  return (
+    <>
+      {items.map((it) => {
+        const key =
+          it.type === "tool" ? `${it.key}-${it.tool.status}-${it.tool.input.length}-${it.tool.output.length}`
+          : it.type === "plan" ? `${it.key}-${it.entries.map((e) => e.status).join("")}`
+          : it.type === "permission" ? `${it.key}-${it.answer ? "a" : "o"}`
+          : it.key;
+        return <ThreadRow key={key} item={it} respond={respond} />;
+      })}
+    </>
+  );
+}
+
+function ThreadRow({ item, respond }: { item: ThreadItem; respond: (id: string | number, o: Option) => void }) {
+  switch (item.type) {
+    case "user": return <div className="msg user">{item.text}</div>;
+    // The agent streams markdown (bold, lists, code, links) — render it, don't
+    // show the raw source. html:false in the renderer escapes any embedded HTML.
+    case "agent":
+    case "thought": return <div className={item.type === "thought" ? "msg thought" : "msg bot"} dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
+    case "tool": {
+      const t = item.tool;
+      const body = [t.input, t.output].filter(Boolean).join("\n\n");
+      return <qa-tool name={t.name} kind={t.kind} status={t.status} open={body ? true : undefined}>{body}</qa-tool>;
+    }
+    case "plan": return <qa-plan>{item.entries.map((e, i) => <div key={i} data-s={e.status}>{e.content}</div>)}</qa-plan>;
+    case "permission": return <Permission item={item} respond={respond} />;
+    case "turn": return <qa-turn outcome={item.outcome}></qa-turn>;
+  }
+}
+
+/** Inline permission (qa-ask). qa-ask renders standard buttons labelled by the
+ *  option ids; we delegate clicks, match the button's data-opt to its option. */
+function Permission({ item, respond }: { item: Extract<ThreadItem, { type: "permission" }>; respond: (id: string | number, o: Option) => void }) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (item.answer) return;
+    const el = ref.current;
+    if (!el) return;
+    const onClick = (e: Event) => {
+      const btn = (e.target as HTMLElement).closest("button");
+      if (!btn?.dataset.opt) return;
+      const opt = item.options.find((o) => o.optionId === btn.dataset.opt);
+      if (opt) respond(item.reqId, opt);
+    };
+    el.addEventListener("click", onClick);
+    return () => el.removeEventListener("click", onClick);
+  }, [item, respond]);
+  // JSON so an option label can hold any character, and the answer is keyed by a
+  // stable optionId — not the button's visible text.
+  const opts = JSON.stringify(item.options.map((o) => ({ id: o.optionId, label: o.name, desc: o.kind })));
+  const q = `Allow the agent to <code>${esc(item.title)}</code>?`;
+  return <qa-ask ref={ref} label="Permission" q={q} options={opts} answered={item.answer ?? undefined}></qa-ask>;
+}
+
+/** The fresh-session state — mirrors the wireframe's #thread-empty. */
+function ChatEmpty({ error }: { error?: boolean }) {
+  if (error) return <Cell kind="error" icon="!" title="Couldn't reach the agent" sub="Is the hub running? `npm run serve:fake` in code/hub/." />;
+  return (
+    <div className="chat-empty">
+      <div className="ce-glyph">✦</div>
+      <div className="ce-title">Start a session</div>
+      <div className="ce-sub">Ask the agent to trace a ticket, plan tests, or draft cases. You'll see every step, approve what it runs, and review what it produces — right here.</div>
+    </div>
+  );
+}
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** The framework's empty/loading/error cell (`.qa-empty`). */
 function Cell({ kind, icon, title, sub }: { kind: string; icon: string; title: string; sub?: string }) {

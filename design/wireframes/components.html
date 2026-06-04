@@ -162,14 +162,14 @@
       </div>
     </div>
   </main>
-  <qa-drawer>
+  <qa-drawer commands='[{"name":"jr-trace","description":"Trace a ticket into a workspace"},{"name":"tw-plan-init","description":"Start a test plan"}]' context='["STORY-001.md"]'>
     <div class="msg user">Plan the tests for STORY-001.</div>
-    <div class="act">▸ loaded planning-tests · detected Type B</div>
+    <div class="act">▸ 2 commands available · jr-trace · tw-plan-init</div>
     <qa-tool kind="execute" status="completed" name="Terminal · <code>ls docs/stories</code>" open>$ ls docs/stories
 <span class="out">STORY-001.md  STORY-002.md  STORY-003.md  README.md</span></qa-tool>
     <div class="msg bot">Drafted the plan overview.</div>
     <qa-ask label="Permission · canUseTool" q="Allow <code>Write test_plan/00_overview.md</code>?"
-      options="Always allow|For this session, Allow once|Just this call, Reject|Deny"></qa-ask>
+      options='[{"id":"allow_always","label":"Always allow","desc":"For this session"},{"id":"allow","label":"Allow once","desc":"Just this call"},{"id":"reject","label":"Reject","desc":"Deny"}]'></qa-ask>
   </qa-drawer>
   <qa-md-viewer></qa-md-viewer>
 </qa-app>

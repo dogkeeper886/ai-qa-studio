@@ -21,6 +21,12 @@
 
 const esc = s => (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
+/* Idempotent custom-element registration. A custom element can only be defined
+   once per name; this module is imported as a side effect, so any re-evaluation
+   (a bundler hot-reload, a double import) would otherwise throw and wedge the
+   page. Skip names already registered so re-running the module is harmless. */
+const defineEl = (name, ctor) => { if (!customElements.get(name)) customElements.define(name, ctor); };
+
 /* ---- theme ---- */
 function applyTheme() {
   const b = document.body;
@@ -47,10 +53,10 @@ function syncAssistantBtn() {
 function toggleAssistant() { assistantUserSet = true; document.body.classList.toggle('assistant-collapsed'); syncAssistantBtn(); }
 
 /* ---- qa-app: just a layout host (styled in CSS) ---- */
-customElements.define('qa-app', class extends HTMLElement {});
+defineEl('qa-app', class extends HTMLElement {});
 
 /* ---- qa-sidebar (brand="…" sets the product name; default "AI QA Studio") ---- */
-customElements.define('qa-sidebar', class extends HTMLElement {
+defineEl('qa-sidebar', class extends HTMLElement {
   // Observe `active` so navigation re-renders the nav in place — the element (and
   // its collapse state) survives instead of remounting.
   static get observedAttributes() { return ['active']; }
@@ -111,7 +117,7 @@ customElements.define('qa-sidebar', class extends HTMLElement {
 });
 
 /* ---- qa-topbar (crumb="A / B / C" bolds the last segment) ---- */
-customElements.define('qa-topbar', class extends HTMLElement {
+defineEl('qa-topbar', class extends HTMLElement {
   connectedCallback() {
     // crumb="Label | Label|url / Label" — last segment is the current page (bold); ancestors with a url link
     const parts = (this.getAttribute('crumb') || '').split('/').map(s => s.trim()).filter(Boolean);
@@ -130,7 +136,7 @@ customElements.define('qa-topbar', class extends HTMLElement {
 });
 
 /* ---- qa-rail (step="N" = current 1-indexed; add `inprogress` for ● on current) ---- */
-customElements.define('qa-rail', class extends HTMLElement {
+defineEl('qa-rail', class extends HTMLElement {
   connectedCallback() {
     const cur = parseInt(this.getAttribute('step') || '1', 10);
     const inprog = this.hasAttribute('inprogress');
@@ -150,7 +156,7 @@ customElements.define('qa-rail', class extends HTMLElement {
 
 /* ---- qa-drawer (assistant). Collapsible via the ✕ + topbar ✦ Assistant; responsive.
        `pinned` = always-on (no ✕, no auto-hide); `closed` = start hidden. ---- */
-customElements.define('qa-drawer', class extends HTMLElement {
+defineEl('qa-drawer', class extends HTMLElement {
   connectedCallback() {
     const body = this.innerHTML;
     const title = this.getAttribute('title') || '✦ Assistant';
@@ -161,9 +167,28 @@ customElements.define('qa-drawer', class extends HTMLElement {
        <div class="dhead"><span class="dtitle">${esc(title)}</span><span class="dhead-right">${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</span></div>
        <div class="dbody">${body}</div>
        <div class="dinput">
-         <div class="dctx"><button class="cchip" type="button">＋ Add context</button><button class="cchip" type="button">/ Commands</button></div>
-         <div class="dcompose"><div class="dbox">${esc(ph)}</div><button class="dsend" type="button" title="Send">↑</button></div>
+         <div class="dctx"></div>
+         <div class="dpicker" hidden></div>
+         <input class="dfile" type="file" multiple hidden>
+         <div class="dcompose"><textarea class="dbox" rows="1" placeholder="${esc(ph)}"></textarea><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
+    this._renderAffordances();  // fills .dctx + .dpicker from the commands/context attrs (re-run on change)
+    // Affordances by delegation so they survive picker re-renders. The framework
+    // owns the chrome and the simple moves — toggle the picker, drop "/name " in,
+    // open the file browser, remove a chip; live data and file contents are the
+    // app's job (it sets commands/context and answers qa-attach / qa-detach).
+    // Keeping this in the element is what lets the wireframe show the composer and
+    // any screen compose it.
+    const picker = this.querySelector('.dpicker'), box = this.querySelector('.dbox'), file = this.querySelector('.dfile');
+    this.querySelector('.dinput').addEventListener('click', e => {
+      const tog = e.target.closest('[data-toggle]');
+      if (tog) { if (tog.dataset.toggle === 'cmd') picker.hidden = !picker.hidden; else file.click(); return; }
+      const row = e.target.closest('.dpicker .dpickrow');
+      if (row && row.dataset.cmd) { box.value = `/${row.dataset.cmd} `; box.focus(); picker.hidden = true; return; }
+      const rm = e.target.closest('.ctxchip .x');
+      if (rm) this.dispatchEvent(new CustomEvent('qa-detach', { bubbles: true, detail: { index: Number(rm.dataset.i) } }));
+    });
+    file.addEventListener('change', () => { if (file.files.length) this.dispatchEvent(new CustomEvent('qa-attach', { bubbles: true, detail: { files: file.files } })); file.value = ''; });
     // Drag the left border to resize (clamped); width is the element's own style.
     const rez = this.querySelector('.dresize');
     const onMove = e => { this.style.width = Math.min(720, Math.max(300, this._startW + (this._startX - e.clientX))) + 'px'; };
@@ -181,10 +206,27 @@ customElements.define('qa-drawer', class extends HTMLElement {
     responsive();
     window.addEventListener('resize', responsive);
   }
+  // commands='[{name,description}]' → the /Commands picker · context='[label,…]'
+  // → attached chips. Both are JSON so a value (a description, a filename) can hold
+  // any character — the earlier comma-joined attribute shattered descriptions on
+  // every comma. Observed so the panel can feed the agent's live commands and the
+  // current attachment list.
+  static get observedAttributes() { return ['commands', 'context']; }
+  attributeChangedCallback() { if (this.isConnected) this._renderAffordances(); }
+  _parse(attr) { try { return JSON.parse(this.getAttribute(attr) || '[]'); } catch { return []; } }
+  _renderAffordances() {
+    const dctx = this.querySelector('.dctx'), dpicker = this.querySelector('.dpicker');
+    if (!dctx || !dpicker) return;  // not built yet (attr set before connect)
+    const cmds = this._parse('commands'), ctx = this._parse('context');
+    dctx.innerHTML = ctx.map((c, i) => `<span class="ctxchip">${esc(c)}<span class="x" data-i="${i}" title="Remove">✕</span></span>`).join('') +
+      `<button class="cchip" data-toggle="ctx" type="button">＋ Add context</button><button class="cchip" data-toggle="cmd" type="button">/ Commands</button>`;
+    dpicker.innerHTML = `<div class="dpickhead">Commands</div>` +
+      (cmds.map(c => `<button class="dpickrow" type="button" data-cmd="${esc(c.name)}"><span class="dpickname">/${esc(c.name)}</span>${c.description ? `<span class="dpickdesc">${esc(c.description)}</span>` : ''}</button>`).join('') || '<div class="dpickempty">No commands available</div>');
+  }
 });
 
 /* ---- qa-field (the standout input; add `multiline` for a textarea) ---- */
-customElements.define('qa-field', class extends HTMLElement {
+defineEl('qa-field', class extends HTMLElement {
   connectedCallback() {
     const label = this.getAttribute('label');
     const ph = esc(this.getAttribute('placeholder') || '');
@@ -198,7 +240,7 @@ customElements.define('qa-field', class extends HTMLElement {
 });
 
 /* ---- qa-btn (variant: primary|ghost|sm|sm-primary) ---- */
-customElements.define('qa-btn', class extends HTMLElement {
+defineEl('qa-btn', class extends HTMLElement {
   connectedCallback() {
     const text = this.textContent.trim();
     const cls = { primary:'qa-btn', ghost:'qa-btn ghost', sm:'qa-btn sm', 'sm-primary':'qa-btn sm primary' }
@@ -208,7 +250,7 @@ customElements.define('qa-btn', class extends HTMLElement {
 });
 
 /* ---- qa-toggle (add `on` for the active state) ---- */
-customElements.define('qa-toggle', class extends HTMLElement {
+defineEl('qa-toggle', class extends HTMLElement {
   connectedCallback() {
     this.innerHTML = `<span class="switch${this.hasAttribute('on') ? '' : ' off'}"><span class="knob"></span></span>`;
     this.querySelector('.switch').onclick = e => e.currentTarget.classList.toggle('off');
@@ -216,7 +258,7 @@ customElements.define('qa-toggle', class extends HTMLElement {
 });
 
 /* ---- qa-gate-card (drawer verdict card; verdict=pass|fail|blocked) ---- */
-customElements.define('qa-gate-card', class extends HTMLElement {
+defineEl('qa-gate-card', class extends HTMLElement {
   connectedCallback() {
     const v = (this.getAttribute('verdict') || 'pass').toLowerCase();
     const title = this.getAttribute('title') || 'GATE 1 — Plan completeness';
@@ -240,7 +282,7 @@ customElements.define('qa-gate-card', class extends HTMLElement {
          attention    — paused/needs-you variant (accent border + ⏸)
          placeholder  — the instruction field's placeholder
          approve-href — navigate the primary button (wireframe links) ---- */
-customElements.define('qa-decision', class extends HTMLElement {
+defineEl('qa-decision', class extends HTMLElement {
   connectedCallback() {
     const title = this.getAttribute('title') || 'Your call';
     const rec = this.getAttribute('recommendation');
@@ -267,7 +309,7 @@ customElements.define('qa-decision', class extends HTMLElement {
 });
 
 /* ---- qa-md-viewer (markdown document modal; open via window.qaDoc.open({name,rendered,source})) ---- */
-customElements.define('qa-md-viewer', class extends HTMLElement {
+defineEl('qa-md-viewer', class extends HTMLElement {
   connectedCallback() {
     this.innerHTML =
       `<div class="mdback"><div class="mdwin">
@@ -312,7 +354,7 @@ customElements.define('qa-md-viewer', class extends HTMLElement {
         body (input / result / diff) is inset and shown on expand.
         name=title (may contain <code>) · kind=execute|edit|read|search|skill|mcp
         status=queued|executing|completed|failed · `open` starts expanded. ---- */
-customElements.define('qa-tool', class extends HTMLElement {
+defineEl('qa-tool', class extends HTMLElement {
   connectedCallback() {
     const detail = this.innerHTML.trim();
     const name = this.getAttribute('name') || 'Tool';      // trusted wireframe markup (may include <code>)
@@ -337,7 +379,7 @@ customElements.define('qa-tool', class extends HTMLElement {
 
 /* ---- qa-plan: the agent's task list (ACP `plan`). Children are entries; each
         child's data-s = done|doing|todo sets the marker. ---- */
-customElements.define('qa-plan', class extends HTMLElement {
+defineEl('qa-plan', class extends HTMLElement {
   connectedCallback() {
     const rows = [...this.children].map(c => ({ s: c.getAttribute('data-s') || 'todo', t: c.innerHTML }));
     this.innerHTML =
@@ -348,7 +390,7 @@ customElements.define('qa-plan', class extends HTMLElement {
 
 /* ---- qa-turn: a quiet boundary line between turns (ACP result / stop_reason) —
         a hairline + a muted label, NOT a card. outcome=end_turn|refusal|error|cancelled ---- */
-customElements.define('qa-turn', class extends HTMLElement {
+defineEl('qa-turn', class extends HTMLElement {
   connectedCallback() {
     const outcome = (this.getAttribute('outcome') || 'end_turn').toLowerCase();
     const OUT = { end_turn:['✓','Turn complete'], refusal:['⦸','Refused'], error:['!','Turn errored'], cancelled:['■','Cancelled'] };
@@ -369,7 +411,7 @@ customElements.define('qa-turn', class extends HTMLElement {
         approve / send-back on something it produced. Marked with the accent so it
         reads as "your move." label=eyebrow · q=the ask (may contain <code>) ·
         options="Label|desc, Label|desc" (first is primary). ---- */
-customElements.define('qa-ask', class extends HTMLElement {
+defineEl('qa-ask', class extends HTMLElement {
   connectedCallback() {
     const label = this.getAttribute('label') || 'Needs you';
     const q = this.getAttribute('q') || '';                 // trusted wireframe markup
@@ -379,14 +421,16 @@ customElements.define('qa-ask', class extends HTMLElement {
       this.innerHTML = `<div class="asklabel">${esc(label)}</div><div class="askq">${q}</div><div class="askdone">✓ ${esc(answered)}</div>`;
       return;
     }
-    const opts = (this.getAttribute('options') || '').split(',').map(s => s.trim()).filter(Boolean);
+    // options='[{id,label,desc}]' — JSON so a label can hold any character, and
+    // each button carries data-opt=id so the answer is keyed by a stable id, not
+    // by its visible text. (first option renders primary.)
+    let opts = []; try { opts = JSON.parse(this.getAttribute('options') || '[]'); } catch { /* malformed → no options */ }
     this.innerHTML =
       `<div class="asklabel">${esc(label)}</div>
        <div class="askq">${q}</div>
-       <div class="askopts">${opts.map((o, i) => {
-         const [l, d] = o.split('|').map(s => s.trim());
-         return `<button class="askopt${i === 0 ? ' primary' : ''}" type="button"><span class="ol">${esc(l)}</span>${d ? `<span class="od">${esc(d)}</span>` : ''}</button>`;
-       }).join('')}</div>`;
+       <div class="askopts">${opts.map((o, i) =>
+         `<button class="qa-btn sm${i === 0 ? ' primary' : ''}" type="button" data-opt="${esc(o.id ?? '')}"${o.desc ? ` title="${esc(o.desc)}"` : ''}>${esc(o.label)}</button>`
+       ).join('')}</div>`;
   }
 });
 
