@@ -23,8 +23,8 @@ isn't listed below, flag it anyway.
 READMEs, stories, CLAUDE.md, and anything like them. Don't tie this skill to a fixed
 inventory of the current commands and skills; new ones appear and old ones change. The
 **published deliverables the product generates** for outside readers — test plans, test
-cases, review emails, demo files, and the like — are reviewed by the typography +
-phrasing deliverable review, **not here**.
+cases, review emails, demo files, and the like — are reviewed by the deliverable review,
+`reviewing-typography` (the look) + `reviewing-phrasing` (the words), **not here**.
 
 ## The five questions
 
