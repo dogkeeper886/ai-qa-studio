@@ -73,6 +73,9 @@ units exist now; don't hardcode an inventory that will drift.
    if some review actually inspects what that producer makes.
 4. **Flag the gaps.** Name every producer with **no** review covering its output — that
    is a pairing violation. Note the missing review and where it would live.
+5. **Mark the exempt.** A producer that yields no outward deliverable to review —
+   internal scaffolding, a visual folded into an already-reviewed doc, an authoring
+   input, tooling logs — is **exempt**, not a gap. List it as exempt and say why.
 
 Report pairings as a small table and list the unpaired producers as findings:
 
@@ -80,6 +83,7 @@ Report pairings as a small table and list the unpaired producers as findings:
 Producer → Review
 <producer>           → <review>            ✓
 <producer>           → (none)              ✗  needs: <proposed review + home>
+<producer>           → (exempt)            —  <why it has no outward deliverable>
 ```
 
 ## Steps
