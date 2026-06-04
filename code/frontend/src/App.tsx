@@ -227,7 +227,7 @@ function Thread({ items, status, respond }: { items: ThreadItem[]; status: strin
     <>
       {items.map((it) => {
         const key =
-          it.type === "tool" ? `${it.key}-${it.tool.status}-${it.tool.output.length}`
+          it.type === "tool" ? `${it.key}-${it.tool.status}-${it.tool.input.length}-${it.tool.output.length}`
           : it.type === "plan" ? `${it.key}-${it.entries.map((e) => e.status).join("")}`
           : it.type === "permission" ? `${it.key}-${it.answer ? "a" : "o"}`
           : it.key;
@@ -242,8 +242,11 @@ function ThreadRow({ item, respond }: { item: ThreadItem; respond: (id: string |
     case "user": return <div className="msg user">{item.text}</div>;
     case "agent": return <div className="msg bot">{item.text}</div>;
     case "thought": return <div className="msg thought">{item.text}</div>;
-    case "act": return <div className="act">{item.text}</div>;
-    case "tool": return <qa-tool name={item.tool.name} kind={item.tool.kind} status={item.tool.status} open={item.tool.output ? true : undefined}>{item.tool.output}</qa-tool>;
+    case "tool": {
+      const t = item.tool;
+      const body = [t.input, t.output].filter(Boolean).join("\n\n");
+      return <qa-tool name={t.name} kind={t.kind} status={t.status} open={body ? true : undefined}>{body}</qa-tool>;
+    }
     case "plan": return <qa-plan>{item.entries.map((e, i) => <div key={i} data-s={e.status}>{e.content}</div>)}</qa-plan>;
     case "permission": return <Permission item={item} respond={respond} />;
     case "turn": return <qa-turn outcome={item.outcome}></qa-turn>;

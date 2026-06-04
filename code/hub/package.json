@@ -7,7 +7,8 @@
   "scripts": {
     "serve": "tsx src/serve.ts",
     "serve:fake": "HUB_FAKE=1 tsx src/serve.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "node --import tsx --test src/*.test.ts"
   },
   "dependencies": {
     "@zed-industries/claude-code-acp": "0.16.2",
