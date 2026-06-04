@@ -47,4 +47,4 @@ single, discoverable commands, not tribal knowledge spread across READMEs.
 ## Status
 
 - Created: 2026-06-04
-- Issues: #29, #30
+- Issues: #29 (PR #31 open), #30
