@@ -9,10 +9,11 @@ The local backend. Two jobs (both proven in the POC, #9/#10):
 ```bash
 make install
 make serve-fake     # scripted fake agent — no auth/credit, for frontend dev
-make serve          # real agent — needs ~/.claude creds + the linked run-surface
+make serve          # real agent — needs ~/.claude creds; .claude surface is committed
 ```
 
-- **Real mode** needs the `.claude` run-surface: `../../scripts/link-runsurface.sh`.
+- **Real mode** loads the committed `.claude` workflow surface (`.claude/commands` +
+  `.claude/skills`) from the repo root — no build step.
   The adapter wraps the `claude` CLI (refuses to launch nested), so the hub clears
   `CLAUDECODE` when spawning it; auth comes from `~/.claude`.
 - **Fake mode** (`HUB_FAKE=1`) impersonates a scripted agent — message → plan →

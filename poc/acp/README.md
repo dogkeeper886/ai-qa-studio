@@ -34,10 +34,7 @@ the browser is a real ACP client and renders a **standard**, not a bespoke event
 1. **Auth** — local Claude Code credentials (`~/.claude/.credentials.json`). The adapter
    inherits them; no `ANTHROPIC_API_KEY` needed.
 2. **Run-surface** — the agent reads `.claude/skills` + `.claude/commands` from the repo
-   root. Those dirs are gitignored; (re)build them from `workflow/` with:
-   ```bash
-   ../../scripts/link-runsurface.sh      # see that script; links workflow/ → .claude/
-   ```
+   root. These are committed (the single workflow surface) — nothing to build.
 3. `npm install` in this directory.
 
 > The adapter wraps the `claude` CLI, which refuses to launch **nested** inside a Claude

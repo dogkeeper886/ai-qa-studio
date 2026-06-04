@@ -5,7 +5,7 @@ When every box is ticked and `reference/` is empty, delete the folder.
 
 Legend: `[ ]` not started · `[~]` in review · `[x]` ported & reference deleted
 
-## (a) workflow — skills  → `workflow/skills/`
+## (a) workflow — skills  → `.claude/skills/`
 
 - [ ] `analyzing-logs`
 - [ ] `creating-demo`
@@ -20,7 +20,7 @@ Legend: `[ ]` not started · `[~]` in review · `[x]` ported & reference deleted
 - [ ] `syncing-testlink`
 - [x] `tracking-changes` — removed; dashboard derives status from artifacts (no separate tracking ledger)
 
-## (a) workflow — commands  → `workflow/commands/`
+## (a) workflow — commands  → `.claude/commands/`
 
 ### confluence
 - [ ] `confluence/cf-create-page`
