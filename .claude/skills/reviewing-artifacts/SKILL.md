@@ -4,8 +4,10 @@ description: |
   Reviews any workflow artifact — the commands, skills, and project docs that are the
   tooling (READMEs, stories, CLAUDE.md, and the like) — against five goal questions:
   one clear job, complete, a goal not a frozen spec, fits the studio, right for its
-  reader. Not for the published deliverables the product generates (test plans, cases,
-  emails, demos) — those go to the typography + phrasing review. Floor, not ceiling.
+  reader. Also runs a producer→review pairing coverage pass that flags any producer
+  shipped without a paired review. Not for the published deliverables the product
+  generates (test plans, cases, emails, demos) — those go to the typography + phrasing
+  review. Floor, not ceiling.
 ---
 
 # reviewing-artifacts
@@ -21,8 +23,8 @@ isn't listed below, flag it anyway.
 READMEs, stories, CLAUDE.md, and anything like them. Don't tie this skill to a fixed
 inventory of the current commands and skills; new ones appear and old ones change. The
 **published deliverables the product generates** for outside readers — test plans, test
-cases, review emails, demo files, and the like — are reviewed by the typography +
-phrasing deliverable review, **not here**.
+cases, review emails, demo files, and the like — are reviewed by the deliverable review,
+`reviewing-typography` (the look) + `reviewing-phrasing` (the words), **not here**.
 
 ## The five questions
 
@@ -53,6 +55,37 @@ Where each type leans:
 | Story | Q3 (goal, not spec) — this is what `dw-review-story` checks at the story stage |
 | CLAUDE.md | Q2/Q4 (matches the repo as it actually is — no orphaned references) |
 
+## Producer→review pairing (coverage pass)
+
+A standing rule (CLAUDE.md → "Review pairing"): every **producer** has a **paired
+review**. When the scope is the whole workflow — or any change that adds/edits a
+producer — run this coverage pass on top of the five questions.
+
+It is a **method, not a fixed list** — derive the producers and reviews from whatever
+units exist now; don't hardcode an inventory that will drift.
+
+1. **List the producers.** A producer is any unit that *creates, syncs, publishes, or
+   drafts a deliverable* — by name (`create-`, `sync-`, `publish-`, `draft-`, `init-`)
+   or by what it does (a producing gerund skill like `planning-tests`, `creating-demo`).
+2. **List the reviews.** Any unit whose job is to *check a result* — `*-review`,
+   `*-verify`, the `reviewing-*` skills, a typography/format audit.
+3. **Match each producer to the review that covers its output.** A pairing is real only
+   if some review actually inspects what that producer makes.
+4. **Flag the gaps.** Name every producer with **no** review covering its output — that
+   is a pairing violation. Note the missing review and where it would live.
+5. **Mark the exempt.** A producer that yields no outward deliverable to review —
+   internal scaffolding, a visual folded into an already-reviewed doc, an authoring
+   input, tooling logs — is **exempt**, not a gap. List it as exempt and say why.
+
+Report pairings as a small table and list the unpaired producers as findings:
+
+```
+Producer → Review
+<producer>           → <review>            ✓
+<producer>           → (none)              ✗  needs: <proposed review + home>
+<producer>           → (exempt)            —  <why it has no outward deliverable>
+```
+
 ## Steps
 
 1. **Scope.** A single file, a folder, or "the files I just changed." Find where the
@@ -60,8 +93,10 @@ Where each type leans:
 2. **Read** the target(s).
 3. **Ask the five questions** of each. Checklists are a floor — note anything else that
    weakens the artifact.
-4. **Report** (below).
-5. **Fix (if asked).** Smallest blast radius first: remove leaked hardcoding, fill gaps,
+4. **Pairing coverage pass** (when reviewing the workflow or a producer change) — run
+   the section above and report unpaired producers.
+5. **Report** (below).
+6. **Fix (if asked).** Smallest blast radius first: remove leaked hardcoding, fill gaps,
    tighten wording. Structural changes — merging, splitting, or removing an artifact —
    need explicit confirmation. Never delete an artifact without approval; flag it for
    removal instead.

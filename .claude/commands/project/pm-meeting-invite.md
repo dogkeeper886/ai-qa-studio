@@ -377,3 +377,9 @@ Apply design principles (white space, font weight, reference links) and best pra
 | Test Plan Review | `Meeting_Invite_Test_Plan_Review.md` | Project root |
 | Test Cases Review | `Meeting_Invite_Test_Cases_Review.md` | Project root |
 | Demo Showcase | `Demo_Showcase_Invite.md` | Project root |
+
+## Paired Review
+
+The invite is a text deliverable for outside readers — pair it with its review. Before it
+goes out, run `reviewing-phrasing` on it (reader, content, tone, purpose, use) and apply
+the findings.

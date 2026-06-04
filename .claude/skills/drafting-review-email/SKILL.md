@@ -63,6 +63,12 @@ After confirmation, save:
 - `demo/Demo_Showcase_Email.md` — email draft
 - `Meeting_Invite_[Type]_Review.md` — meeting invite
 
+## Paired Review
+
+The email and invite are text deliverables for outside readers — pair them with their
+review. Before they go out, run `reviewing-phrasing` on both: it weighs the words against
+reader, content, tone, purpose, and use. Apply its findings, then send.
+
 ## Expected Input
 
 Path to project folder containing README.md, test_plan/, test_cases/, and confluence/ files.

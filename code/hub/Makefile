@@ -1,6 +1,6 @@
 # code/hub — AI QA Studio hub.
 #   make install     — npm deps (idempotent)
-#   make serve       — real ACP agent (needs ~/.claude creds + linked run-surface)
+#   make serve       — real ACP agent (needs ~/.claude creds; .claude surface is committed)
 #   make serve-fake  — scripted fake agent (no auth/credit; for frontend dev)
 #   make type-check  — tsc --noEmit
 .DEFAULT_GOAL := help

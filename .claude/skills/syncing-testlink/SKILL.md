@@ -34,6 +34,7 @@ Copy and track your progress:
 - [ ] Step 5: Create test plan, add all cases
 - [ ] Step 6: Verify count matches local
 - [ ] Validate: Count match (PASS/FAIL) + test plan ID
+- [ ] Step 7: Review the sync (run `/tl-review-sync` — coverage, fidelity, formatting, assignment)
 ```
 
 ## Steps
@@ -104,6 +105,14 @@ Report:
 
 Path to project folder containing `test_cases/` with TS-XX files.
 
+## Paired Review
+
+A sync is a producer — pair it with its review before relying on TestLink. Run
+`/tl-review-sync` against the test plan (or suite): it reads each case back and checks
+coverage, content fidelity (no truncation), HTML formatting per `/tl-format`,
+classification, and plan assignment. Fix findings through `/tl-update-case` or by
+re-syncing, then re-review.
+
 ## Next Step
 
-After syncing TestLink, run `/executing-tests` to execute the test plan.
+After the sync passes `/tl-review-sync`, run `/executing-tests` to execute the test plan.

@@ -49,3 +49,9 @@ Formatted bug report in markdown ready for copy-paste
 
 **Note**: {{note}}
 ```
+
+## Paired Review
+
+The bug report is a text deliverable for an outside reader — pair it with its review.
+Before it goes to Jira/email, run `reviewing-phrasing` on it (reader, content, tone,
+purpose, use), apply the findings, then send.
