@@ -52,7 +52,11 @@ export function useAgent() {
   const handle = useCallback((msg: JsonRpc) => {
     if (msg.id !== undefined && (msg.result !== undefined || msg.error !== undefined)) {
       const p = pending.current.get(msg.id as number); pending.current.delete(msg.id as number);
-      p?.resolve(msg.result);
+      // A JSON-RPC error response is a failure, not a turn that ended fine — reject
+      // so the awaiting caller (sendPrompt) renders an error turn instead of
+      // resolving `undefined` and reporting a phantom "end_turn".
+      if (msg.error !== undefined) p?.reject(new Error((msg.error as any)?.message ?? "agent error"));
+      else p?.resolve(msg.result);
       return;
     }
     if (msg.method === "session/request_permission" && msg.id !== undefined) {

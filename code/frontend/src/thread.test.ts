@@ -9,7 +9,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initThread, threadReducer, type ThreadState, type Action, type ThreadItem, type ToolItem } from "./thread";
@@ -82,9 +82,14 @@ test("a tool boundary closes the open text bubble (chunks after it start fresh)"
   assert.equal(agents(s).length, 2, "two separate bubbles around the tool");
 });
 
-test("replays the real captured adapter stream without loss", () => {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const samplePath = resolve(here, "../../../poc/acp/samples/probe-session-updates.ndjson");
+// The capture lives under poc/acp/samples/, which is gitignored (it's a real
+// session, kept out of the repo) — so skip this replay when it isn't present
+// rather than hard-failing a fresh checkout / CI. The hand-written cases above
+// already cover the reducer; this is the extra real-stream check when available.
+const here = dirname(fileURLToPath(import.meta.url));
+const samplePath = resolve(here, "../../../poc/acp/samples/probe-session-updates.ndjson");
+
+test("replays the real captured adapter stream without loss", { skip: existsSync(samplePath) ? false : "no captured sample present" }, () => {
   const lines: any[] = readFileSync(samplePath, "utf8").trim().split("\n").map((l: string) => JSON.parse(l).update);
 
   const s = apply(updates(lines));
