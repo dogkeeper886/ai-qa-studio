@@ -92,7 +92,7 @@ Producer → Review
 4. **Pairing coverage pass** (when reviewing the workflow or a producer change) — run
    the section above and report unpaired producers.
 5. **Report** (below).
-5. **Fix (if asked).** Smallest blast radius first: remove leaked hardcoding, fill gaps,
+6. **Fix (if asked).** Smallest blast radius first: remove leaked hardcoding, fill gaps,
    tighten wording. Structural changes — merging, splitting, or removing an artifact —
    need explicit confirmation. Never delete an artifact without approval; flag it for
    removal instead.
