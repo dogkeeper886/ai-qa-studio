@@ -107,6 +107,19 @@ qa-drawer .chat-empty .ce-sub{font-size:.78rem;line-height:1.55;max-width:18rem}
 .msg.user{align-self:flex-end;background:var(--bg);border:1px solid var(--border);color:var(--fg);
   padding:.45rem .7rem;border-radius:12px 12px 2px 12px}
 .msg.bot{align-self:flex-start}
+/* markdown rendered into a bot/thought bubble — collapse block margins so it
+   still reads as one bubble, and style code/links with tokens. */
+.msg.bot>:first-child,.msg.thought>:first-child{margin-top:0}
+.msg.bot>:last-child,.msg.thought>:last-child{margin-bottom:0}
+.msg.bot p,.msg.thought p{margin:.4rem 0}
+.msg.bot ul,.msg.bot ol{margin:.4rem 0;padding-left:1.2rem}
+.msg.bot li{margin:.15rem 0}
+.msg.bot code,.msg.thought code{font-family:ui-monospace,Menlo,monospace;font-size:.95em;
+  background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.03rem .3rem}
+.msg.bot pre{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:.5rem .7rem;overflow:auto;margin:.4rem 0}
+.msg.bot pre code{border:0;padding:0;background:none}
+.msg.bot a{color:var(--accent)}
 .act{align-self:flex-start;font-size:.6875rem;color:var(--muted);font-family:ui-monospace,Menlo,monospace;
   border-left:2px solid var(--border);padding-left:.5rem;line-height:1.5}
 

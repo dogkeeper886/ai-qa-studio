@@ -240,8 +240,10 @@ function Thread({ items, status, respond }: { items: ThreadItem[]; status: strin
 function ThreadRow({ item, respond }: { item: ThreadItem; respond: (id: string | number, o: Option) => void }) {
   switch (item.type) {
     case "user": return <div className="msg user">{item.text}</div>;
-    case "agent": return <div className="msg bot">{item.text}</div>;
-    case "thought": return <div className="msg thought">{item.text}</div>;
+    // The agent streams markdown (bold, lists, code, links) — render it, don't
+    // show the raw source. html:false in the renderer escapes any embedded HTML.
+    case "agent": return <div className="msg bot" dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
+    case "thought": return <div className="msg thought" dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
     case "tool": {
       const t = item.tool;
       const body = [t.input, t.output].filter(Boolean).join("\n\n");

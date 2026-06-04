@@ -52,13 +52,23 @@ export function useAgent() {
   }, [send]);
 
   useEffect(() => {
-    const sock = new WebSocket(`ws://${location.host}/ws/agent`);
-    ws.current = sock;
-    sock.onopen = () => setStatus("ready");
-    sock.onclose = () => setStatus((s) => (s === "error" ? s : "closed"));
-    sock.onerror = () => setStatus("error");
-    sock.onmessage = (ev) => { try { handle(JSON.parse(ev.data)); } catch { /* ignore non-JSON frames */ } };
-    return () => sock.close();
+    // Open in a deferred task, not synchronously. Each connection spawns a real
+    // agent adapter on the hub, and StrictMode mounts effects twice in dev
+    // (mount → unmount → remount); a synchronous open would spawn two adapters,
+    // killing one immediately. Deferring lets the cleanup cancel the first
+    // attempt before it opens, so the cycle collapses to a single connection.
+    let sock: WebSocket | null = null;
+    let cancelled = false;
+    const open = setTimeout(() => {
+      if (cancelled) return;
+      sock = new WebSocket(`ws://${location.host}/ws/agent`);
+      ws.current = sock;
+      sock.onopen = () => setStatus("ready");
+      sock.onclose = () => setStatus((s) => (s === "error" ? s : "closed"));
+      sock.onerror = () => setStatus("error");
+      sock.onmessage = (ev) => { try { handle(JSON.parse(ev.data)); } catch { /* ignore non-JSON frames */ } };
+    }, 0);
+    return () => { cancelled = true; clearTimeout(open); sock?.close(); };
   }, [handle]);
 
   /** Send one prompt turn (lazily initializing the session on first use). */
