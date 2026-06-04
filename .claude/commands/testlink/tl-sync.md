@@ -55,9 +55,9 @@ When user provides:
 - **For missing test cases (in local but not in TestLink):**
   - Create new test cases with proper formatting
   - Use HTML formatting according to TestLink format guidelines
-  - Apply proper importance level (1=High/P0, 2=Medium/P1, 3=Low/P2)
+  - Apply proper importance level (1=Low, 2=Medium, 3=High — per `tl-create-case`)
   - Set execution_type to 1 (manual)
-  - Set status to 1 (final/ready)
+  - Set status to 7 (final)
   - Report new test case IDs created
 
 ### Step 6: Review Preconditions
