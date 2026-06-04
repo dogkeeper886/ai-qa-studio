@@ -55,7 +55,7 @@ and compare to the local source.
 - [ ] HTML entities (`&gt;`, `&lt;`, `&amp;`, …) rendered, not doubled or raw
 
 ### 4. Classification
-- [ ] Importance set correctly (1=High/P0, 2=Medium/P1, 3=Low/P2)
+- [ ] Importance set correctly (1=Low, 2=Medium, 3=High — per `tl-create-case`)
 - [ ] `execution_type` and `status` as intended (e.g. manual / final)
 
 ### 5. Plan + Assignment (when reviewing a test plan)
