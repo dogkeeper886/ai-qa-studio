@@ -77,5 +77,7 @@ enforced by an audit — a standing rule in CLAUDE.md, not something to remember
 - Issues: #22 (commit `.claude/`, remove the split), #23 (restructure: grouped +
   command-first), #21 (producer→review pairing: rule + audit) — folded in from the
   original prefer-commands port
-- Follow-up (from #21's coverage pass): #24 (TestLink sync review — the one
-  high-value pairing gap)
+- Follow-ups (from #21's coverage pass): #24 (TestLink sync review — `tl-review-sync`),
+  #25 (`reviewing-phrasing` — the missing phrasing half, pairs the text deliverables).
+  Low-stakes scaffolds (`pm-init`, `tw-diagrams`, `tw-baseline-trace`, `session-summary`)
+  are explicitly **exempt** (no outward deliverable to review).
