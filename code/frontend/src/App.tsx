@@ -8,7 +8,7 @@ import "../../../design/wireframes/components.js"; // side effect: defines qa-* 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MarkdownIt from "markdown-it";
-import { useAgent, type Attachment, type Command, type Option, type ThreadItem } from "./agent";
+import { useAgent, type Attachment, type Option, type ThreadItem } from "./agent";
 
 // Real markdown renderer for the doc viewer. html:false escapes any raw HTML in
 // a story file (no script injection); the default preset gives GFM tables, and
@@ -180,20 +180,24 @@ function RepoStories({ repo, onBack }: { repo: string; onBack: () => void }) {
 }
 
 /** The assistant drawer wired to the live ACP loop. qa-drawer is a light-DOM
- *  custom element that builds its own chrome (header, .dbody, composer) on
- *  connect — so we let it build, then portal the React thread into its .dbody
- *  and wire the composer's textarea + send button. */
+ *  custom element that builds its own chrome — header, .dbody, and the composer
+ *  with its affordances (command picker, Add-context, chips). We let it build,
+ *  portal the React thread into .dbody, feed it the live commands + attachment
+ *  list (as JSON attributes), and answer its qa-attach / qa-detach events. */
 function Assistant() {
   const ref = useRef<HTMLElement>(null);
   const { items, status, commands, sendPrompt, respondPermission } = useAgent();
   const [body, setBody] = useState<HTMLElement | null>(null);
-  const [afford, setAfford] = useState<HTMLElement | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const boxRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // submit reads the live textarea + attachments; held in a ref so the static
-  // composer event listeners (wired once below) always see current state.
+  // The drawer renders its own picker + chips from these (JSON so a description or
+  // filename can hold any character — the comma-joined version shattered them).
+  const commandsAttr = JSON.stringify(commands);
+  const contextAttr = JSON.stringify(attachments.map((a) => a.name));
+
+  // submit reads the live textarea + attachments; held in a ref so the listeners
+  // (wired once below) always see current state.
   const submitRef = useRef(() => {});
   submitRef.current = () => {
     const box = boxRef.current;
@@ -202,91 +206,44 @@ function Assistant() {
     void sendPrompt(text, attachments);
     if (box) box.value = "";
     setAttachments([]);
-    setPickerOpen(false);
   };
 
   useEffect(() => {
     const drawer = ref.current;
     if (!drawer) return;
     setBody(drawer.querySelector<HTMLElement>(".dbody"));
-    setAfford(drawer.querySelector<HTMLElement>(".dafford"));
     const box = drawer.querySelector<HTMLTextAreaElement>(".dbox");
     boxRef.current = box;
     const btn = drawer.querySelector<HTMLButtonElement>(".dsend");
     const fire = () => submitRef.current();
     const onKey = (e: KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); fire(); } };
+    // The drawer's file browser picked files (qa-attach) → read as text and hold
+    // as attachments; its chip ✕ (qa-detach) → drop one by index.
+    const onAttach = (e: Event) => {
+      const files = (e as CustomEvent).detail.files as FileList;
+      void Promise.all([...files].map(async (f) => ({ name: f.name, text: await f.text() })))
+        .then((read) => setAttachments((prev) => [...prev, ...read]));
+    };
+    const onDetach = (e: Event) => {
+      const i = (e as CustomEvent).detail.index as number;
+      setAttachments((prev) => prev.filter((_, j) => j !== i));
+    };
     btn?.addEventListener("click", fire);
     box?.addEventListener("keydown", onKey);
-    return () => { btn?.removeEventListener("click", fire); box?.removeEventListener("keydown", onKey); };
+    drawer.addEventListener("qa-attach", onAttach);
+    drawer.addEventListener("qa-detach", onDetach);
+    return () => {
+      btn?.removeEventListener("click", fire);
+      box?.removeEventListener("keydown", onKey);
+      drawer.removeEventListener("qa-attach", onAttach);
+      drawer.removeEventListener("qa-detach", onDetach);
+    };
   }, []);
 
-  const insertCommand = (name: string) => {
-    const box = boxRef.current;
-    if (box) { box.value = `/${name} `; box.focus(); }
-    setPickerOpen(false);
-  };
-  const addFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    const read = await Promise.all([...files].map(async (f) => ({ name: f.name, text: await f.text() })));
-    setAttachments((prev) => [...prev, ...read]);
-  };
-
   return (
     <>
-      <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send"></qa-drawer>
+      <qa-drawer ref={ref} title="✦ Assistant" placeholder="Message the agent — ⏎ to send" commands={commandsAttr} context={contextAttr}></qa-drawer>
       {body && createPortal(<Thread items={items} status={status} respond={respondPermission} />, body)}
-      {afford && createPortal(
-        <Composer
-          commands={commands}
-          attachments={attachments}
-          pickerOpen={pickerOpen}
-          onTogglePicker={() => setPickerOpen((v) => !v)}
-          onPickCommand={insertCommand}
-          onBrowse={addFiles}
-          onRemove={(i) => setAttachments((p) => p.filter((_, j) => j !== i))}
-        />,
-        afford,
-      )}
-    </>
-  );
-}
-
-/** The composer affordances rendered into the drawer's .dafford slot: attachment
- *  chips, the Add-context (browse file) + Commands pills, and the command picker
- *  fed from the agent's live command list. */
-function Composer({ commands, attachments, pickerOpen, onTogglePicker, onPickCommand, onBrowse, onRemove }: {
-  commands: Command[];
-  attachments: Attachment[];
-  pickerOpen: boolean;
-  onTogglePicker: () => void;
-  onPickCommand: (name: string) => void;
-  onBrowse: (files: FileList | null) => void;
-  onRemove: (i: number) => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  return (
-    <>
-      {pickerOpen && (
-        <div className="dpicker">
-          <div className="dpickhead">Commands</div>
-          {commands.length === 0
-            ? <div className="dpickempty">No commands available</div>
-            : commands.map((c) => (
-                <button className="dpickrow" type="button" key={c.name} onClick={() => onPickCommand(c.name)}>
-                  <span className="dpickname">/{c.name}</span>
-                  {c.description && <span className="dpickdesc">{c.description}</span>}
-                </button>
-              ))}
-        </div>
-      )}
-      <div className="dctx">
-        {attachments.map((a, i) => (
-          <span className="ctxchip" key={`${a.name}-${i}`}>{a.name}<span className="x" title="Remove" onClick={() => onRemove(i)}>✕</span></span>
-        ))}
-        <button className="cchip" type="button" onClick={() => fileRef.current?.click()}>＋ Add context</button>
-        <button className="cchip" type="button" onClick={onTogglePicker}>/ Commands</button>
-      </div>
-      <input ref={fileRef} type="file" multiple hidden onChange={(e) => { onBrowse(e.target.files); e.target.value = ""; }} />
     </>
   );
 }

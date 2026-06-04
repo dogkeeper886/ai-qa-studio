@@ -167,13 +167,28 @@ defineEl('qa-drawer', class extends HTMLElement {
        <div class="dhead"><span class="dtitle">${esc(title)}</span><span class="dhead-right">${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</span></div>
        <div class="dbody">${body}</div>
        <div class="dinput">
-         <div class="dafford"></div>
+         <div class="dctx"></div>
+         <div class="dpicker" hidden></div>
+         <input class="dfile" type="file" multiple hidden>
          <div class="dcompose"><textarea class="dbox" rows="1" placeholder="${esc(ph)}"></textarea><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
-    // The composer affordances — attachment chips, the Add-context + Commands
-    // pills, the command picker — are owned by the React panel and rendered into
-    // .dafford. They need the agent's live command list and attachment state, not
-    // a serialized attribute; the drawer just provides the shell and the slot.
+    this._renderAffordances();  // fills .dctx + .dpicker from the commands/context attrs (re-run on change)
+    // Affordances by delegation so they survive picker re-renders. The framework
+    // owns the chrome and the simple moves — toggle the picker, drop "/name " in,
+    // open the file browser, remove a chip; live data and file contents are the
+    // app's job (it sets commands/context and answers qa-attach / qa-detach).
+    // Keeping this in the element is what lets the wireframe show the composer and
+    // any screen compose it.
+    const picker = this.querySelector('.dpicker'), box = this.querySelector('.dbox'), file = this.querySelector('.dfile');
+    this.querySelector('.dinput').addEventListener('click', e => {
+      const tog = e.target.closest('[data-toggle]');
+      if (tog) { if (tog.dataset.toggle === 'cmd') picker.hidden = !picker.hidden; else file.click(); return; }
+      const row = e.target.closest('.dpicker .dpickrow');
+      if (row && row.dataset.cmd) { box.value = `/${row.dataset.cmd} `; box.focus(); picker.hidden = true; return; }
+      const rm = e.target.closest('.ctxchip .x');
+      if (rm) this.dispatchEvent(new CustomEvent('qa-detach', { bubbles: true, detail: { index: Number(rm.dataset.i) } }));
+    });
+    file.addEventListener('change', () => { if (file.files.length) this.dispatchEvent(new CustomEvent('qa-attach', { bubbles: true, detail: { files: file.files } })); file.value = ''; });
     // Drag the left border to resize (clamped); width is the element's own style.
     const rez = this.querySelector('.dresize');
     const onMove = e => { this.style.width = Math.min(720, Math.max(300, this._startW + (this._startX - e.clientX))) + 'px'; };
@@ -190,6 +205,23 @@ defineEl('qa-drawer', class extends HTMLElement {
     const responsive = () => { if (!assistantUserSet) document.body.classList.toggle('assistant-collapsed', startClosed || window.innerWidth < BP); syncAssistantBtn(); };
     responsive();
     window.addEventListener('resize', responsive);
+  }
+  // commands='[{name,description}]' → the /Commands picker · context='[label,…]'
+  // → attached chips. Both are JSON so a value (a description, a filename) can hold
+  // any character — the earlier comma-joined attribute shattered descriptions on
+  // every comma. Observed so the panel can feed the agent's live commands and the
+  // current attachment list.
+  static get observedAttributes() { return ['commands', 'context']; }
+  attributeChangedCallback() { if (this.isConnected) this._renderAffordances(); }
+  _parse(attr) { try { return JSON.parse(this.getAttribute(attr) || '[]'); } catch { return []; } }
+  _renderAffordances() {
+    const dctx = this.querySelector('.dctx'), dpicker = this.querySelector('.dpicker');
+    if (!dctx || !dpicker) return;  // not built yet (attr set before connect)
+    const cmds = this._parse('commands'), ctx = this._parse('context');
+    dctx.innerHTML = ctx.map((c, i) => `<span class="ctxchip">${esc(c)}<span class="x" data-i="${i}" title="Remove">✕</span></span>`).join('') +
+      `<button class="cchip" data-toggle="ctx" type="button">＋ Add context</button><button class="cchip" data-toggle="cmd" type="button">/ Commands</button>`;
+    dpicker.innerHTML = `<div class="dpickhead">Commands</div>` +
+      (cmds.map(c => `<button class="dpickrow" type="button" data-cmd="${esc(c.name)}"><span class="dpickname">/${esc(c.name)}</span>${c.description ? `<span class="dpickdesc">${esc(c.description)}</span>` : ''}</button>`).join('') || '<div class="dpickempty">No commands available</div>');
   }
 });
 

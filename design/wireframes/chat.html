@@ -38,8 +38,8 @@
   </main>
 
   <qa-drawer title="✦ Assistant" placeholder="Message the agent — ⏎ to send" style="width:440px"
-    commands="jr-trace|Trace a ticket into a workspace, tw-plan-init|Start a test plan"
-    context="STORY-001.md">
+    commands='[{"name":"jr-trace","description":"Trace a ticket into a workspace"},{"name":"tw-plan-init","description":"Start a test plan"}]'
+    context='["STORY-001.md"]'>
     <!-- EMPTY: a fresh session (?state=empty) -->
     <div id="thread-empty" hidden>
       <div class="ce-glyph">✦</div>
