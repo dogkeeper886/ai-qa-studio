@@ -24,22 +24,35 @@ export function useAgent() {
   const sessionId = useRef<string | null>(null);
   const initialized = useRef(false);
 
+  // Fire-and-forget send (notifications, permission answers, error replies). Drops
+  // silently if the socket isn't open — there's nothing to await on these.
   const send = useCallback((o: unknown) => {
     const s = ws.current;
     if (s && s.readyState === WebSocket.OPEN) s.send(JSON.stringify(o));
   }, []);
 
-  const pending = useRef(new Map<number, (r: any) => void>());
+  const pending = useRef(new Map<number, { resolve: (r: any) => void; reject: (e: Error) => void }>());
+  /** Reject every in-flight request — called when the socket closes/errors so an
+   *  awaited turn fails fast instead of hanging forever on a dropped response. */
+  const failPending = useCallback((reason: string) => {
+    for (const { reject } of pending.current.values()) reject(new Error(reason));
+    pending.current.clear();
+  }, []);
+  /** Request/response. Rejects immediately if the socket isn't open (rather than
+   *  dropping the frame and never resolving), so sendPrompt surfaces an error
+   *  turn and resets status instead of wedging on "running". */
   const request = useCallback((method: string, params: unknown) => {
+    const s = ws.current;
+    if (!s || s.readyState !== WebSocket.OPEN) return Promise.reject(new Error("agent not connected"));
     const id = nextId.current++;
-    send({ jsonrpc: "2.0", id, method, params });
-    return new Promise<any>((resolve) => pending.current.set(id, resolve));
-  }, [send]);
+    s.send(JSON.stringify({ jsonrpc: "2.0", id, method, params }));
+    return new Promise<any>((resolve, reject) => pending.current.set(id, { resolve, reject }));
+  }, []);
 
   const handle = useCallback((msg: JsonRpc) => {
     if (msg.id !== undefined && (msg.result !== undefined || msg.error !== undefined)) {
-      const r = pending.current.get(msg.id as number); pending.current.delete(msg.id as number);
-      r?.(msg.result);
+      const p = pending.current.get(msg.id as number); pending.current.delete(msg.id as number);
+      p?.resolve(msg.result);
       return;
     }
     if (msg.method === "session/request_permission" && msg.id !== undefined) {
@@ -67,12 +80,12 @@ export function useAgent() {
       sock = new WebSocket(`ws://${location.host}/ws/agent`);
       ws.current = sock;
       sock.onopen = () => setStatus("ready");
-      sock.onclose = () => setStatus((s) => (s === "error" ? s : "closed"));
-      sock.onerror = () => setStatus("error");
+      sock.onclose = () => { failPending("agent disconnected"); setStatus((s) => (s === "error" ? s : "closed")); };
+      sock.onerror = () => { failPending("agent error"); setStatus("error"); };
       sock.onmessage = (ev) => { try { handle(JSON.parse(ev.data)); } catch { /* ignore non-JSON frames */ } };
     }, 0);
     return () => { cancelled = true; clearTimeout(open); sock?.close(); };
-  }, [handle]);
+  }, [handle, failPending]);
 
   /** Send one prompt turn (lazily initializing the session on first use).
    *  Attachments ride along as embedded `resource` content blocks ahead of the

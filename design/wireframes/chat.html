@@ -72,7 +72,7 @@
 
       <qa-ask label="Permission"
         q="Allow the agent to <code>Write test_plan/00_overview.md</code>?"
-        options="Always allow|Approve Write for the rest of this session, Allow once|Just this one call, Reject|Deny and tell the agent why"></qa-ask>
+        options='[{"id":"allow_always","label":"Always allow","desc":"Approve Write for the rest of this session"},{"id":"allow","label":"Allow once","desc":"Just this one call"},{"id":"reject","label":"Reject","desc":"Deny and tell the agent why"}]'></qa-ask>
     </div>
   </qa-drawer>
 

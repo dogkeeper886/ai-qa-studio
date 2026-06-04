@@ -421,14 +421,16 @@ defineEl('qa-ask', class extends HTMLElement {
       this.innerHTML = `<div class="asklabel">${esc(label)}</div><div class="askq">${q}</div><div class="askdone">✓ ${esc(answered)}</div>`;
       return;
     }
-    const opts = (this.getAttribute('options') || '').split(',').map(s => s.trim()).filter(Boolean);
+    // options='[{id,label,desc}]' — JSON so a label can hold any character, and
+    // each button carries data-opt=id so the answer is keyed by a stable id, not
+    // by its visible text. (first option renders primary.)
+    let opts = []; try { opts = JSON.parse(this.getAttribute('options') || '[]'); } catch { /* malformed → no options */ }
     this.innerHTML =
       `<div class="asklabel">${esc(label)}</div>
        <div class="askq">${q}</div>
-       <div class="askopts">${opts.map((o, i) => {
-         const [l, d] = o.split('|').map(s => s.trim());
-         return `<button class="qa-btn sm${i === 0 ? ' primary' : ''}" type="button"${d ? ` title="${esc(d)}"` : ''}>${esc(l)}</button>`;
-       }).join('')}</div>`;
+       <div class="askopts">${opts.map((o, i) =>
+         `<button class="qa-btn sm${i === 0 ? ' primary' : ''}" type="button" data-opt="${esc(o.id ?? '')}"${o.desc ? ` title="${esc(o.desc)}"` : ''}>${esc(o.label)}</button>`
+       ).join('')}</div>`;
   }
 });
 

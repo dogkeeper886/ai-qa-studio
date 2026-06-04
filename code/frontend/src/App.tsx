@@ -5,7 +5,7 @@
 import "../../../design/wireframes/tokens.css";
 import "../../../design/wireframes/components.css";
 import "../../../design/wireframes/components.js"; // side effect: defines qa-* + window.qaDoc
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MarkdownIt from "markdown-it";
 import { useAgent, type Attachment, type Option, type ThreadItem } from "./agent";
@@ -193,8 +193,10 @@ function Assistant() {
 
   // The drawer renders its own picker + chips from these (JSON so a description or
   // filename can hold any character — the comma-joined version shattered them).
-  const commandsAttr = JSON.stringify(commands);
-  const contextAttr = JSON.stringify(attachments.map((a) => a.name));
+  // Memoised so streamed tokens (which re-render Assistant) don't re-stringify the
+  // ~80-command list every frame.
+  const commandsAttr = useMemo(() => JSON.stringify(commands), [commands]);
+  const contextAttr = useMemo(() => JSON.stringify(attachments.map((a) => a.name)), [attachments]);
 
   // submit reads the live textarea + attachments; held in a ref so the listeners
   // (wired once below) always see current state.
@@ -276,8 +278,8 @@ function ThreadRow({ item, respond }: { item: ThreadItem; respond: (id: string |
     case "user": return <div className="msg user">{item.text}</div>;
     // The agent streams markdown (bold, lists, code, links) — render it, don't
     // show the raw source. html:false in the renderer escapes any embedded HTML.
-    case "agent": return <div className="msg bot" dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
-    case "thought": return <div className="msg thought" dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
+    case "agent":
+    case "thought": return <div className={item.type === "thought" ? "msg thought" : "msg bot"} dangerouslySetInnerHTML={{ __html: markdown.render(item.text) }} />;
     case "tool": {
       const t = item.tool;
       const body = [t.input, t.output].filter(Boolean).join("\n\n");
@@ -290,7 +292,7 @@ function ThreadRow({ item, respond }: { item: ThreadItem; respond: (id: string |
 }
 
 /** Inline permission (qa-ask). qa-ask renders standard buttons labelled by the
- *  option names; we delegate clicks, match the label to its option, and answer. */
+ *  option ids; we delegate clicks, match the button's data-opt to its option. */
 function Permission({ item, respond }: { item: Extract<ThreadItem, { type: "permission" }>; respond: (id: string | number, o: Option) => void }) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -299,14 +301,16 @@ function Permission({ item, respond }: { item: Extract<ThreadItem, { type: "perm
     if (!el) return;
     const onClick = (e: Event) => {
       const btn = (e.target as HTMLElement).closest("button");
-      if (!btn) return;
-      const opt = item.options.find((o) => o.name === btn.textContent?.trim());
+      if (!btn?.dataset.opt) return;
+      const opt = item.options.find((o) => o.optionId === btn.dataset.opt);
       if (opt) respond(item.reqId, opt);
     };
     el.addEventListener("click", onClick);
     return () => el.removeEventListener("click", onClick);
   }, [item, respond]);
-  const opts = item.options.map((o) => `${o.name}|${o.kind}`).join(", ");
+  // JSON so an option label can hold any character, and the answer is keyed by a
+  // stable optionId — not the button's visible text.
+  const opts = JSON.stringify(item.options.map((o) => ({ id: o.optionId, label: o.name, desc: o.kind })));
   const q = `Allow the agent to <code>${esc(item.title)}</code>?`;
   return <qa-ask ref={ref} label="Permission" q={q} options={opts} answered={item.answer ?? undefined}></qa-ask>;
 }
