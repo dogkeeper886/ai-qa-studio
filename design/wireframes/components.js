@@ -161,21 +161,13 @@ customElements.define('qa-drawer', class extends HTMLElement {
        <div class="dhead"><span class="dtitle">${esc(title)}</span><span class="dhead-right">${pinned ? '' : '<button class="qa-iconbtn dclose" title="Close assistant">✕</button>'}</span></div>
        <div class="dbody">${body}</div>
        <div class="dinput">
-         <div class="dctx"></div>
-         <div class="dpicker" hidden></div>
-         <div class="dattach" hidden><button class="dpickrow" type="button"><span class="dpickname">Story or file…</span></button><button class="dpickrow" type="button"><span class="dpickname">Image…</span></button></div>
+         <div class="dafford"></div>
          <div class="dcompose"><textarea class="dbox" rows="1" placeholder="${esc(ph)}"></textarea><button class="dsend" type="button" title="Send">↑</button></div>
        </div>`;
-    this._renderAffordances();  // fills .dctx + .dpicker from the commands/context attrs (re-run on change)
-    // Affordances via delegation (survives picker re-renders): chips toggle the
-    // picker / attach menu (one open at a time); a picked command drops "/name " in.
-    const picker = this.querySelector('.dpicker'), attach = this.querySelector('.dattach'), box = this.querySelector('.dbox');
-    this.querySelector('.dinput').addEventListener('click', e => {
-      const tog = e.target.closest('[data-toggle]');
-      if (tog) { if (tog.dataset.toggle === 'cmd') { attach.hidden = true; picker.hidden = !picker.hidden; } else { picker.hidden = true; attach.hidden = !attach.hidden; } return; }
-      const row = e.target.closest('.dpicker .dpickrow');
-      if (row && row.dataset.cmd) { box.value = `/${row.dataset.cmd} `; box.focus(); picker.hidden = true; }
-    });
+    // The composer affordances — attachment chips, the Add-context + Commands
+    // pills, the command picker — are owned by the React panel and rendered into
+    // .dafford. They need the agent's live command list and attachment state, not
+    // a serialized attribute; the drawer just provides the shell and the slot.
     // Drag the left border to resize (clamped); width is the element's own style.
     const rez = this.querySelector('.dresize');
     const onMove = e => { this.style.width = Math.min(720, Math.max(300, this._startW + (this._startX - e.clientX))) + 'px'; };
@@ -192,20 +184,6 @@ customElements.define('qa-drawer', class extends HTMLElement {
     const responsive = () => { if (!assistantUserSet) document.body.classList.toggle('assistant-collapsed', startClosed || window.innerWidth < BP); syncAssistantBtn(); };
     responsive();
     window.addEventListener('resize', responsive);
-  }
-  // commands="name|desc,…" → the /Commands picker · context="label,…" → attached
-  // chips. Observed so the React panel can feed the agent's real commands live.
-  static get observedAttributes() { return ['commands', 'context']; }
-  attributeChangedCallback() { if (this.isConnected) this._renderAffordances(); }
-  _renderAffordances() {
-    const dctx = this.querySelector('.dctx'), dpicker = this.querySelector('.dpicker');
-    if (!dctx || !dpicker) return;
-    const cmds = (this.getAttribute('commands') || '').split(',').map(s => s.trim()).filter(Boolean);
-    const ctx = (this.getAttribute('context') || '').split(',').map(s => s.trim()).filter(Boolean);
-    dctx.innerHTML = ctx.map(c => `<span class="ctxchip">${esc(c)}<span class="x" title="Remove">✕</span></span>`).join('') +
-      `<button class="cchip" data-toggle="ctx" type="button">＋ Add context</button><button class="cchip" data-toggle="cmd" type="button">/ Commands</button>`;
-    dpicker.innerHTML = `<div class="dpickhead">Commands</div>` +
-      (cmds.map(c => { const [n, d] = c.split('|').map(s => s.trim()); return `<button class="dpickrow" type="button" data-cmd="${esc(n)}"><span class="dpickname">/${esc(n)}</span>${d ? `<span class="dpickdesc">${esc(d)}</span>` : ''}</button>`; }).join('') || '<div class="dpickempty">No commands available</div>');
   }
 });
 

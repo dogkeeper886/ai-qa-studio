@@ -10,6 +10,9 @@ import { initThread, threadReducer, type Option } from "./thread";
 export type { ToolItem, PlanEntry, Option, Command, ThreadItem } from "./thread";
 export type AgentStatus = "connecting" | "ready" | "running" | "error" | "closed";
 
+/** A file attached from the composer, sent as embedded ACP context. */
+export interface Attachment { name: string; text: string; }
+
 interface JsonRpc { id?: string | number; method?: string; result?: unknown; error?: unknown; params?: any }
 
 export function useAgent() {
@@ -71,10 +74,14 @@ export function useAgent() {
     return () => { cancelled = true; clearTimeout(open); sock?.close(); };
   }, [handle]);
 
-  /** Send one prompt turn (lazily initializing the session on first use). */
-  const sendPrompt = useCallback(async (text: string) => {
-    if (!text.trim() || status === "running") return;
-    dispatch({ type: "user", text });
+  /** Send one prompt turn (lazily initializing the session on first use).
+   *  Attachments ride along as embedded `resource` content blocks ahead of the
+   *  text — the agent advertises embeddedContext support. */
+  const sendPrompt = useCallback(async (text: string, attachments: Attachment[] = []) => {
+    const trimmed = text.trim();
+    if ((!trimmed && attachments.length === 0) || status === "running") return;
+    const label = attachments.length ? `${trimmed}${trimmed ? " " : ""}📎 ${attachments.map((a) => a.name).join(", ")}` : trimmed;
+    dispatch({ type: "user", text: label });
     setStatus("running");
     try {
       if (!initialized.current) {
@@ -86,7 +93,11 @@ export function useAgent() {
         const r = await request("session/new", { cwd, mcpServers: [] });
         sessionId.current = r?.sessionId ?? null;
       }
-      const res = await request("session/prompt", { sessionId: sessionId.current, prompt: [{ type: "text", text }] });
+      const prompt = [
+        ...attachments.map((a) => ({ type: "resource", resource: { uri: `file://${a.name}`, mimeType: "text/plain", text: a.text } })),
+        ...(trimmed ? [{ type: "text", text: trimmed }] : []),
+      ];
+      const res = await request("session/prompt", { sessionId: sessionId.current, prompt });
       dispatch({ type: "turn", outcome: res?.stopReason ?? "end_turn" });
     } catch {
       dispatch({ type: "turn", outcome: "error" });
